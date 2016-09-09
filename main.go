@@ -115,7 +115,7 @@ func wrapMain() error {
 	if vargs.Dir != "" {
 		path = filepath.Join(path, vargs.Dir)
 	}
-	runner := NewEnviron(workspace.Path, e, os.Stdout, os.Stderr)
+	runner := NewEnviron(path, e, os.Stdout, os.Stderr)
 
 	// setup gcloud with our service account so we can use it for an access token
 	err = runner.Run(vargs.GCloudCmd, "auth", "activate-service-account", "--key-file", keyPath)
