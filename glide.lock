@@ -1,0 +1,20 @@
+hash: 60731775e40497b1ea638fbb2a7d78c55daaee828a38ca540bedf3d12a9208d7
+updated: 2016-09-09T11:14:42.753188984-04:00
+imports:
+- name: github.com/drone/drone-plugin-go
+  version: d6109f644c5935c22620081b4c234bb2263743c7
+  subpackages:
+  - plugin
+testImports:
+- name: github.com/davecgh/go-spew
+  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
+  subpackages:
+  - spew
+- name: github.com/pmezard/go-difflib
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
+  subpackages:
+  - difflib
+- name: github.com/stretchr/testify
+  version: d77da356e56a7428ad25149ca77381849a6a5232
+  subpackages:
+  - assert
