@@ -19,5 +19,5 @@ RUN rm go_appengine_sdk_linux_amd64-$GOOGLE_APP_ENGINE_SDK_VERSION.zip
 # Clean up
 RUN rm -rf ./google-cloud-sdk/.install
 
-ADD drone-gke /bin/
+ADD drone-gae /bin/
 ENTRYPOINT ["/bin/drone-gae"]
