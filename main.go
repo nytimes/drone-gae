@@ -17,7 +17,7 @@ type GAE struct {
 	Action      string            `json:"action"`
 	AddlArgs    map[string]string `json:"addl_args"`
 	Version     string            `json:"version"`
-	Environment map[string]string `json:"environment"`
+	Environment map[string]string `json:"env"`
 
 	AppFile string `json:"app_file"`
 	Project string `json:"project"`
