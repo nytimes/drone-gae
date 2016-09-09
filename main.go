@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -61,6 +62,7 @@ func wrapMain() error {
 	plugin.MustParse()
 
 	// Check required params
+	log.Printf("%#v", vargs)
 
 	if vargs.Token == "" {
 		return fmt.Errorf("missing required param: token")
