@@ -158,7 +158,9 @@ func wrapMain() error {
 	// 'app.yaml'. If an app file is given and it does not equal that, we need
 	// to move it there
 	if vargs.AppFile != "app.yaml" {
-		err = os.Rename(vargs.AppFile, "app.yaml")
+		orig := filepath.Join(vargs.Dir, vargs.AppFile)
+		dest := filepath.Join(vargs.Dir, "app.yaml")
+		err = os.Rename(orig, dest)
 		if err != nil {
 			return fmt.Errorf("error moving app file: %s\n", err)
 		}
