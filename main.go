@@ -165,7 +165,7 @@ func wrapMain() error {
 	// some commands in appcfg are weird and require the app file to be named
 	// 'app.yaml'. If an app file is given and it does not equal that, we need
 	// to move it there
-	if vargs.AppFile != "app.yaml" {
+	if vargs.AppFile != "app.yaml" && vargs.AppFile != "" {
 		orig := filepath.Join(workspace.Path, vargs.Dir, vargs.AppFile)
 		dest := filepath.Join(workspace.Path, vargs.Dir, "app.yaml")
 		err = os.Rename(orig, dest)
