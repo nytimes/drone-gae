@@ -9,7 +9,7 @@ Please don't use it for anything important!
 ## Example
 
 	build:
-	  image: golang:1.7
+	  image: your-goapp-buildbox:1.6
 	  commands:
 	    - goapp get -t
 	    - goapp test -v -cover
@@ -20,6 +20,8 @@ Please don't use it for anything important!
 
 	deploy:
 	  gae:
+        environment:
+          - GOPATH=/drone
         action: update
         project: my-gae-project
 	    version: "$$COMMIT"
