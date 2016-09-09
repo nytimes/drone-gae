@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -156,10 +155,8 @@ func wrapMain() error {
 	// 'app.yaml'. If an app file is given and it does not equal that, we need
 	// to move it there
 	if vargs.AppFile != "app.yaml" {
-		orig := filepath.Join(vargs.Dir, vargs.AppFile)
-		log.Print("original yaml: " + orig)
-		dest := filepath.Join(vargs.Dir, "app.yaml")
-		log.Print("dest yaml: " + dest)
+		orig := filepath.Join(workspace.Path, vargs.Dir, vargs.AppFile)
+		dest := filepath.Join(workspace.Path, vargs.Dir, "app.yaml")
 		err = os.Rename(orig, dest)
 		if err != nil {
 			return fmt.Errorf("error moving app file: %s\n", err)
