@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -123,9 +125,18 @@ func wrapMain() error {
 		return fmt.Errorf("error: %s\n", err)
 	}
 
+	// get access token string
+	tokenCmd := exec.Command(vargs.GCloudCmd, "auth", "print-access-token")
+	var accessToken bytes.Buffer
+	tokenCmd.Stdout = &accessToken
+	err = tokenCmd.Run()
+	if err != nil {
+		return fmt.Errorf("error creating access token: %s\n", err)
+	}
+
 	// build initial args for appcfg command
 	args := []string{
-		"--oauth2_access_token", "$(" + vargs.GCloudCmd + " auth print-access-token)",
+		"--oauth2_access_token", accessToken.String(),
 		"-A", vargs.Project,
 	}
 
