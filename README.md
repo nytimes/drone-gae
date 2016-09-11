@@ -123,7 +123,3 @@ This is currently very new and unstable. Please don't use it for anything import
 	    when:
 	      event: tag
 
-
-## License
-
-MIT.
