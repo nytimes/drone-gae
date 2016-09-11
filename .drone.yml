@@ -21,7 +21,6 @@ publish:
     # See: https://github.com/drone/drone/issues/1296
     storage_driver: vfs
 
-    # Todo: The docs indicate that these should be implicit. What's up?
     username: $$DOCKER_USER
     password: $$DOCKER_PASS
     email: $$DOCKER_EMAIL

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -14,18 +15,40 @@ import (
 )
 
 type GAE struct {
-	// [ update, update_cron, update_indexes, etc.]
-	Action      string            `json:"action"`
-	AddlArgs    map[string]string `json:"addl_args"`
-	Version     string            `json:"version"`
-	Environment map[string]string `json:"env"`
+	// Action is required and can be any action accepted by the `appcfg.py` command in the
+	// App Engine SDK (update, update_cron, update_indexes, set_default_version, etc.)
+	Action string `json:"action"`
+	// AddlArgs is a set of key-value pairs to allow users to pass along any
+	// additional parameters to the `appcfg.py` command.
+	AddlArgs map[string]string `json:"addl_args"`
+	// Version is used to set the version of new deployments
+	// or to alter existing deployments.
+	Version string `json:"version"`
+	// AEEnv allows users to set additional environment variables
+	// in their App Engine environment. This can be useful for injecting
+	// secrets from your Drone secret store.
+	AEEnv map[string]string `json:"ae_environment"`
 
+	// AppFile is the name of the app.yaml file to use for this deployment. This field
+	// is only required if your app.yaml file is not named 'app.yaml'. Sometimes it is
+	// helpful to have a different `app.yaml` file per project for different environment
+	// and autoscaling configurations.
 	AppFile string `json:"app_file"`
-	Project string `json:"project"`
-	Dir     string `json:"dir"`
+	// Dir points to the directory the application exists in. This is only required if
+	// you application is not in the base directory.
+	Dir string `json:"dir"`
 
-	Token     string `json:"token"`
+	// Project is required. It should be the Google Cloud Project to deploy to.
+	Project string `json:"project"`
+	// Token is required and should contain the JSON key of a service account associated
+	// with the Google Cloud project the user wishes to interact with.
+	Token string `json:"token"`
+
+	// GCloudCmd is an optional override for the location of the gcloud CLI tool. This
+	// may be useful if using a custom image.
 	GCloudCmd string `json:"gcloud_cmd"`
+	// AppCfgCmd is an optional override for the location of the App Engine appcfg.py
+	// tool. This may be useful if using a custom image.
 	AppCfgCmd string `json:"appcfg_cmd"`
 }
 
@@ -111,13 +134,8 @@ func wrapMain() error {
 		}
 	}()
 
-	e := os.Environ()
-	// if app dir is not the base, make sure we set the appropriate path
-	path := workspace.Path
-	if vargs.Dir != "" {
-		path = filepath.Join(path, vargs.Dir)
-	}
-	runner := NewEnviron(path, e, os.Stdout, os.Stderr)
+	runner := NewEnviron(filepath.Join(workspace.Path, vargs.Dir), os.Environ(),
+		os.Stdout, os.Stderr)
 
 	// setup gcloud with our service account so we can use it for an access token
 	err = runner.Run(vargs.GCloudCmd, "auth", "activate-service-account", "--key-file", keyPath)
@@ -125,7 +143,7 @@ func wrapMain() error {
 		return fmt.Errorf("error: %s\n", err)
 	}
 
-	// get access token string
+	// get access token string to pass along to `appcfg.py`
 	tokenCmd := exec.Command(vargs.GCloudCmd, "auth", "print-access-token")
 	var accessToken bytes.Buffer
 	tokenCmd.Stdout = &accessToken
@@ -146,8 +164,8 @@ func wrapMain() error {
 	}
 
 	// add any env variables
-	if len(vargs.Environment) > 0 {
-		for k, v := range vargs.Environment {
+	if len(vargs.AEEnv) > 0 {
+		for k, v := range vargs.AEEnv {
 			args = append(args, "-E", k+":"+v)
 		}
 	}
@@ -164,14 +182,15 @@ func wrapMain() error {
 
 	// some commands in appcfg are weird and require the app file to be named
 	// 'app.yaml'. If an app file is given and it does not equal that, we need
-	// to move it there
+	// to copy it there
 	if vargs.AppFile != "app.yaml" && vargs.AppFile != "" {
 		orig := filepath.Join(workspace.Path, vargs.Dir, vargs.AppFile)
 		dest := filepath.Join(workspace.Path, vargs.Dir, "app.yaml")
-		err = os.Rename(orig, dest)
+		err = copyFile(dest, orig)
 		if err != nil {
 			return fmt.Errorf("error moving app file: %s\n", err)
 		}
+
 	}
 
 	err = runner.Run(vargs.AppCfgCmd, args...)
@@ -193,4 +212,35 @@ func getProjectFromToken(j string) string {
 		return ""
 	}
 	return t.ProjectID
+}
+
+func copyFile(dst, src string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	info, err := in.Stat()
+	if err != nil {
+		return err
+	}
+	tmp, err := ioutil.TempFile(filepath.Dir(dst), "")
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(tmp, in)
+	if err != nil {
+		tmp.Close()
+		os.Remove(tmp.Name())
+		return err
+	}
+	if err = tmp.Close(); err != nil {
+		os.Remove(tmp.Name())
+		return err
+	}
+	if err = os.Chmod(tmp.Name(), info.Mode()); err != nil {
+		os.Remove(tmp.Name())
+		return err
+	}
+	return os.Rename(tmp.Name(), dst)
 }
