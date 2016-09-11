@@ -6,7 +6,7 @@ This plugin is a simple wrapper around the `appcfg.py` command, which makes it c
 
 The `action` configruation variable (shown below) can accept any action that you would normally call on `appcfg.py`. So far, it has been tested with `update` to deploy and `set_default_version` to migrate traffic, but it should also be capable of running helpful ops commands like `update_indexes` and `update_cron`.
 
-This is currently very new and unstable. Please don't use it for anything important quit yet!
+This is currently very new and unstable. Please don't use it for anything important quite yet!
 
 
 ## Examples
