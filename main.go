@@ -24,6 +24,8 @@ type GAE struct {
 	// AddlArgs is a set of key-value pairs to allow users to pass along any
 	// additional parameters to the `appcfg.py` command.
 	AddlArgs map[string]string `json:"addl_args"`
+	// AddlFlags is an array of flag parameters that do not have a value.
+	AddlFlags []string `json:"addl_flags"`
 	// Version is used to set the version of new deployments
 	// or to alter existing deployments.
 	Version string `json:"version"`
@@ -194,12 +196,19 @@ func runGcloud(runner *Environ, workspace plugin.Workspace, vargs GAE) error {
 		args = append(args, "--image-url", vargs.FlexImage)
 	}
 
+	if len(vargs.Project) > 0 {
+		args = append(args, "--project", vargs.Project)
+	}
+
 	// add flag to prevent interactive
 	args = append(args, "--quiet")
 
 	// add the remaining arguments
 	for k, v := range vargs.AddlArgs {
 		args = append(args, k, v)
+	}
+	for _, v := range vargs.AddlFlags {
+		args = append(args, v)
 	}
 
 	// some commands in gcloud app are weird and require the app file to be named
