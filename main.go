@@ -194,6 +194,9 @@ func runGcloud(runner *Environ, workspace plugin.Workspace, vargs GAE) error {
 		args = append(args, "--image-url", vargs.FlexImage)
 	}
 
+	// add flag to prevent interactive
+	args = append(args, "--quiet")
+
 	// add the remaining arguments
 	for k, v := range vargs.AddlArgs {
 		args = append(args, k, v)
