@@ -15,8 +15,11 @@ import (
 )
 
 type GAE struct {
-	// Action is required and can be any action accepted by the `appcfg.py` command in the
-	// App Engine SDK (update, update_cron, update_indexes, set_default_version, etc.)
+	// Action is required and can be any action accepted by the `appcfg.py` or
+	// `gcloud app` commands:
+	//
+	// appcfg.py (update, update_cron, update_indexes, set_default_version, etc.)
+	// gcloud app (deploy, services, versions, etc.)
 	Action string `json:"action"`
 	// AddlArgs is a set of key-value pairs to allow users to pass along any
 	// additional parameters to the `appcfg.py` command.
@@ -28,6 +31,9 @@ type GAE struct {
 	// in their App Engine environment. This can be useful for injecting
 	// secrets from your Drone secret store.
 	AEEnv map[string]string `json:"ae_environment"`
+	// FlexImage tells the plugin where to pull the image from when deploying a Flexible
+	// VM instance. Example value: 'gcr.io/nyt-games-dev/puzzles-sub:$COMMIT'
+	FlexImage string `json:"flex_image"`
 
 	// AppFile is the name of the app.yaml file to use for this deployment. This field
 	// is only required if your app.yaml file is not named 'app.yaml'. Sometimes it is
@@ -143,11 +149,83 @@ func wrapMain() error {
 		return fmt.Errorf("error: %s\n", err)
 	}
 
+	// if gcloud app cmd, run it
+	if found := gcloudCmds[vargs.Action]; found {
+		return runGcloud(runner, workspace, vargs)
+	}
+
+	// otherwise, do appcfg.py command
+	return runAppCfg(runner, workspace, vargs)
+
+}
+
+var gcloudCmds = map[string]bool{
+	"deploy":    true,
+	"services":  true,
+	"versions":  true,
+	"instances": true,
+}
+
+func runGcloud(runner *Environ, workspace plugin.Workspace, vargs GAE) error {
+	// add the action first (gcloud app X)
+	args := []string{
+		"app",
+		vargs.Action,
+	}
+
+	// do the addl args first so users can make compound
+	// commands like 'gcloud app services X Y Z ...'
+	for k, v := range vargs.AddlArgs {
+		if !strings.HasPrefix(k, "-") {
+			args = append(args, k, v)
+		}
+	}
+
+	// add the app.yaml location
+	args = append(args, "./app.yaml")
+
+	// add a version if we've got one
+	if vargs.Version != "" {
+		args = append(args, "--version", vargs.Version)
+	}
+
+	if vargs.FlexImage != "" {
+		args = append(args, "--image-url", vargs.FlexImage)
+	}
+
+	// do the remaining args
+	for k, v := range vargs.AddlArgs {
+		if strings.HasPrefix(k, "-") {
+			args = append(args, k, v)
+		}
+	}
+
+	// some commands in gcloud app are weird and require the app file to be named
+	// 'app.yaml'. If an app file is given and it does not equal that, we need
+	// to copy it there
+	if vargs.AppFile != "app.yaml" && vargs.AppFile != "" {
+		orig := filepath.Join(workspace.Path, vargs.Dir, vargs.AppFile)
+		dest := filepath.Join(workspace.Path, vargs.Dir, "app.yaml")
+		err := copyFile(dest, orig)
+		if err != nil {
+			return fmt.Errorf("error moving app file: %s\n", err)
+		}
+	}
+
+	err := runner.Run(vargs.GCloudCmd, args...)
+	if err != nil {
+		return fmt.Errorf("error: %s\n", err)
+	}
+
+	return nil
+}
+
+func runAppCfg(runner *Environ, workspace plugin.Workspace, vargs GAE) error {
 	// get access token string to pass along to `appcfg.py`
 	tokenCmd := exec.Command(vargs.GCloudCmd, "auth", "print-access-token")
 	var accessToken bytes.Buffer
 	tokenCmd.Stdout = &accessToken
-	err = tokenCmd.Run()
+	err := tokenCmd.Run()
 	if err != nil {
 		return fmt.Errorf("error creating access token: %s\n", err)
 	}
