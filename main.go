@@ -31,6 +31,9 @@ type GAE struct {
 	// in their App Engine environment. This can be useful for injecting
 	// secrets from your Drone secret store.
 	AEEnv map[string]string `json:"ae_environment"`
+	// SubCommands are optionally used with `gcloud app` Actions to produce
+	// complex commands like `gcloud app instances delete ...`.
+	SubCommands []string `json:"sub_commands"`
 	// FlexImage tells the plugin where to pull the image from when deploying a Flexible
 	// VM instance. Example value: 'gcr.io/nyt-games-dev/puzzles-sub:$COMMIT'
 	FlexImage string `json:"flex_image"`
@@ -173,12 +176,10 @@ func runGcloud(runner *Environ, workspace plugin.Workspace, vargs GAE) error {
 		vargs.Action,
 	}
 
-	// do the addl args first so users can make compound
-	// commands like 'gcloud app services X Y Z ...'
-	for k, v := range vargs.AddlArgs {
-		if !strings.HasPrefix(k, "-") {
-			args = append(args, k, v)
-		}
+	// Add subcommands to we can make complex calls like
+	// 'gcloud app services X Y Z ...'
+	for _, cmd := range vargs.SubCommands {
+		args = append(args, cmd)
 	}
 
 	// add the app.yaml location
@@ -193,11 +194,9 @@ func runGcloud(runner *Environ, workspace plugin.Workspace, vargs GAE) error {
 		args = append(args, "--image-url", vargs.FlexImage)
 	}
 
-	// do the remaining args
+	// add the remaining arguments
 	for k, v := range vargs.AddlArgs {
-		if strings.HasPrefix(k, "-") {
-			args = append(args, k, v)
-		}
+		args = append(args, k, v)
 	}
 
 	// some commands in gcloud app are weird and require the app file to be named
