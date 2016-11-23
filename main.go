@@ -211,16 +211,8 @@ func runGcloud(runner *Environ, workspace plugin.Workspace, vargs GAE) error {
 		args = append(args, v)
 	}
 
-	// some commands in gcloud app are weird and require the app file to be named
-	// 'app.yaml'. If an app file is given and it does not equal that, we need
-	// to copy it there
-	if vargs.AppFile != "app.yaml" && vargs.AppFile != "" {
-		orig := filepath.Join(workspace.Path, vargs.Dir, vargs.AppFile)
-		dest := filepath.Join(workspace.Path, vargs.Dir, "app.yaml")
-		err := copyFile(dest, orig)
-		if err != nil {
-			return fmt.Errorf("error moving app file: %s\n", err)
-		}
+	if err := setupAppFile(workspace, vargs); err != nil {
+		return err
 	}
 
 	err := runner.Run(vargs.GCloudCmd, args...)
@@ -269,17 +261,8 @@ func runAppCfg(runner *Environ, workspace plugin.Workspace, vargs GAE) error {
 	// add action and current dir
 	args = append(args, vargs.Action, ".")
 
-	// some commands in appcfg are weird and require the app file to be named
-	// 'app.yaml'. If an app file is given and it does not equal that, we need
-	// to copy it there
-	if vargs.AppFile != "app.yaml" && vargs.AppFile != "" {
-		orig := filepath.Join(workspace.Path, vargs.Dir, vargs.AppFile)
-		dest := filepath.Join(workspace.Path, vargs.Dir, "app.yaml")
-		err = copyFile(dest, orig)
-		if err != nil {
-			return fmt.Errorf("error moving app file: %s\n", err)
-		}
-
+	if err = setupAppFile(workspace, vargs); err != nil {
+		return err
 	}
 
 	err = runner.Run(vargs.AppCfgCmd, args...)
@@ -301,6 +284,21 @@ func getProjectFromToken(j string) string {
 		return ""
 	}
 	return t.ProjectID
+}
+
+// some app engine commands are weird and require the app file to be named
+// 'app.yaml'. If an app file is given and it does not equal that, we need
+// to copy it there
+func setupAppFile(workspace plugin.Workspace, vargs GAE) error {
+	if vargs.AppFile != "app.yaml" && vargs.AppFile != "" {
+		orig := filepath.Join(workspace.Path, vargs.Dir, vargs.AppFile)
+		dest := filepath.Join(workspace.Path, vargs.Dir, "app.yaml")
+		err := copyFile(dest, orig)
+		if err != nil {
+			return fmt.Errorf("error moving app file: %s\n", err)
+		}
+	}
+	return nil
 }
 
 func copyFile(dst, src string) error {
