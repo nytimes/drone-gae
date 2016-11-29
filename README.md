@@ -6,6 +6,8 @@ This plugin is a simple wrapper around the `appcfg.py` and `gcloud app` commands
 
 The `action` configruation variable (shown below) can accept any action that you would normally call on `appcfg.py` or `gcloud app`. So far, it has been tested with `update` to deploy and `set_default_version` to migrate traffic in `appcfg` and `gcloud app deploy` for `gcloud app`, but it should also be capable of running helpful ops commands like `update_indexes` and `update_cron`.
 
+To see a full list of configuration settings for the project, check out the [GAE struct declaration](https://github.com/NYTimes/drone-gae/blob/master/main.go#L17-L64).
+
 This is currently using `gcloud` version 135.0.0 and App Engine SDK version `1.9.46`.
 
 ## Examples
