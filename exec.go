@@ -1,10 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"os/exec"
-	"strings"
 )
 
 type Environ struct {
@@ -30,11 +28,5 @@ func (e *Environ) Run(name string, arg ...string) error {
 	cmd.Env = e.env
 	cmd.Stdout = e.stdout
 	cmd.Stderr = e.stderr
-
-	// TODO: Extract this
-	fmt.Println()
-	fmt.Println("$", strings.Join(cmd.Args, " "))
-	//--
-
 	return cmd.Run()
 }
