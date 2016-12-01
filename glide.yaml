@@ -1,4 +1,4 @@
-package: github.com/jprobinson/drone-gae
+package: github.com/nytimes/drone-gae
 import:
 - package: github.com/drone/drone-plugin-go
   subpackages:
