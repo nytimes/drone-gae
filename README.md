@@ -8,7 +8,7 @@ The `action` configruation variable (shown below) can accept any action that you
 
 To see a full list of configuration settings for the project, check out the [GAE struct declaration](https://github.com/NYTimes/drone-gae/blob/master/main.go#L17-L64).
 
-This is currently using `gcloud` version `135.0.0` and App Engine SDK version `1.9.46`.
+This is currently using `gcloud` version `139.0.0` and App Engine SDK version `1.9.48`.
 
 ## Examples
 
