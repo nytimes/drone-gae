@@ -122,7 +122,7 @@ func wrapMain() error {
 	}
 
 	if vargs.AppCfgCmd == "" {
-		vargs.AppCfgCmd = "/go_appengine/appcfg.py"
+		vargs.AppCfgCmd = "/google-cloud-sdk/platform/google_appengine/appcfg.py"
 	}
 
 	// Trim whitespace, to forgive the vagaries of YAML parsing.
