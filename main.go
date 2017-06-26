@@ -45,6 +45,11 @@ type GAE struct {
 	// helpful to have a different `app.yaml` file per project for different environment
 	// and autoscaling configurations.
 	AppFile string `json:"app_file"`
+
+	// CronFile is the name of the cron.yaml file to use for this deployment. This field
+	// is only required if your cron.yaml file is not named 'cron.yaml'
+	CronFile string `json:"cron_file"`
+
 	// Dir points to the directory the application exists in. This is only required if
 	// you application is not in the base directory.
 	Dir string `json:"dir"`
@@ -215,6 +220,10 @@ func runGcloud(runner *Environ, workspace plugin.Workspace, vargs GAE) error {
 		return err
 	}
 
+	if err := setupCronFile(workspace, vargs); err != nil {
+		return err
+	}
+
 	err := runner.Run(vargs.GCloudCmd, args...)
 	if err != nil {
 		return fmt.Errorf("error: %s\n", err)
@@ -265,6 +274,10 @@ func runAppCfg(runner *Environ, workspace plugin.Workspace, vargs GAE) error {
 		return err
 	}
 
+	if err = setupCronFile(workspace, vargs); err != nil {
+		return err
+	}
+
 	err = runner.Run(vargs.AppCfgCmd, args...)
 	if err != nil {
 		return fmt.Errorf("error: %s\n", err)
@@ -296,6 +309,19 @@ func setupAppFile(workspace plugin.Workspace, vargs GAE) error {
 		err := copyFile(dest, orig)
 		if err != nil {
 			return fmt.Errorf("error moving app file: %s\n", err)
+		}
+	}
+	return nil
+}
+
+// Useful for differentiating between prd and dev cron versions for GCP appengine
+func setupCronFile(workspace plugin.Workspace, vargs GAE) error {
+	if vargs.CronFile != "cron.yaml" && vargs.CronFile != "" {
+		orig := filepath.Join(workspace.Path, vargs.Dir, vargs.CronFile)
+		dest := filepath.Join(workspace.Path, vargs.Dir, "cron.yaml")
+		err := copyFile(dest, orig)
+		if err != nil {
+			return fmt.Errorf("error moving cron file: %s\n", err)
 		}
 	}
 	return nil
