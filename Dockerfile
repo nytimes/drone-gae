@@ -1,6 +1,7 @@
 FROM alpine:3.4
 
 ENV GOOGLE_CLOUD_SDK_VERSION=155.0.0
+ENV GOOGLE_APP_ENGINE_SDK_VERSION=1.9.55
 ENV CLOUDSDK_APP_RUNTIME_ROOT=/google-cloud-sdk/platform/ext-runtime/
 RUN apk add --no-cache curl python
 
@@ -12,6 +13,11 @@ RUN ./google-cloud-sdk/install.sh --quiet
 
 # Install the app engine SDK
 RUN ./google-cloud-sdk/bin/gcloud components install app-engine-go
+
+# Install the legacy app engine SDK
+RUN curl -fsSLo go_appengine_sdk_linux_amd64-$GOOGLE_APP_ENGINE_SDK_VERSION.zip https://storage.googleapis.com/appengine-sdks/featured/go_appengine_sdk_linux_amd64-$GOOGLE_APP_ENGINE_SDK_VERSION.zip
+RUN unzip -q go_appengine_sdk_linux_amd64-$GOOGLE_APP_ENGINE_SDK_VERSION.zip
+RUN rm go_appengine_sdk_linux_amd64-$GOOGLE_APP_ENGINE_SDK_VERSION.zip
 
 # Clean up
 RUN rm -rf ./google-cloud-sdk/.install
