@@ -50,6 +50,10 @@ type GAE struct {
 	// is only required if your cron.yaml file is not named 'cron.yaml'
 	CronFile string `json:"cron_file"`
 
+	// DispatchFile is the name of the dispatch.yaml file to use for this deployment. This field
+	// is only required if your dispatch.yaml file is not named 'dispatch.yaml'.
+	DispatchFile string `json:"dispatch_file"`
+
 	// Dir points to the directory the application exists in. This is only required if
 	// you application is not in the base directory.
 	Dir string `json:"dir"`
@@ -224,6 +228,10 @@ func runGcloud(runner *Environ, workspace plugin.Workspace, vargs GAE) error {
 		return err
 	}
 
+	if err := setupDispatchFile(workspace, vargs); err != nil {
+		return err
+	}
+
 	err := runner.Run(vargs.GCloudCmd, args...)
 	if err != nil {
 		return fmt.Errorf("error: %s\n", err)
@@ -322,6 +330,19 @@ func setupCronFile(workspace plugin.Workspace, vargs GAE) error {
 		err := copyFile(dest, orig)
 		if err != nil {
 			return fmt.Errorf("error moving cron file: %s\n", err)
+		}
+	}
+	return nil
+}
+
+// Useful for differentiating between prd and dev dispatch versions for GCP appengine
+func setupDispatchFile(workspace plugin.Workspace, vargs GAE) error {
+	if vargs.DispatchFile != "dispatch.yaml" && vargs.DispatchFile != "" {
+		orig := filepath.Join(workspace.Path, vargs.Dir, vargs.DispatchFile)
+		dest := filepath.Join(workspace.Path, vargs.Dir, "dispatch.yaml")
+		err := copyFile(dest, orig)
+		if err != nil {
+			return fmt.Errorf("error moving dispatch file: %s\n", err)
 		}
 	}
 	return nil
