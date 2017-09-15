@@ -90,56 +90,37 @@ func wrapMain() error {
 	}
 
 	fmt.Printf("Drone GAE Plugin built from %s\n", rev)
+	fmt.Println(os.Environ())
 
-	// https://godoc.org/github.com/drone/drone-plugin-go/plugin
-	workspace := plugin.Workspace{}
-	repo := plugin.Repo{}
-	build := plugin.Build{}
-	system := plugin.System{}
 	vargs := GAE{}
+	workspace := ""
 
-	plugin.Param("workspace", &workspace)
-	plugin.Param("repo", &repo)
-	plugin.Param("build", &build)
-	plugin.Param("system", &system)
-	plugin.Param("vargs", &vargs)
-	plugin.MustParse()
-
-	// Check required params
-	if vargs.Token == "" {
-		return fmt.Errorf("missing required param: token")
+	// Check what drone version we're running on
+	if os.Getenv("DRONE_WORKSPACE") == "" { // 0.4
+		err := configFromStdin(&vargs, &workspace)
+		if err != nil {
+			return err
+		}
+	} else { // 0.5+
+		err := configFromEnv(&vargs, &workspace)
+		if err != nil {
+			return err
+		}
 	}
 
-	if vargs.Project == "" {
-		vargs.Project = getProjectFromToken(vargs.Token)
-	}
-
-	if vargs.Project == "" {
-		return fmt.Errorf("missing required param: project")
-	}
-
-	if vargs.Action == "" {
-		return fmt.Errorf("missing required param: action")
+	err := validateVargs(&vargs)
+	if err != nil {
+		return err
 	}
 
 	keyPath := "/tmp/gcloud.json"
-
-	// Defaults
-
-	if vargs.GCloudCmd == "" {
-		vargs.GCloudCmd = "/google-cloud-sdk/bin/gcloud"
-	}
-
-	if vargs.AppCfgCmd == "" {
-		vargs.AppCfgCmd = "/go_appengine/appcfg.py"
-	}
 
 	// Trim whitespace, to forgive the vagaries of YAML parsing.
 	vargs.Token = strings.TrimSpace(vargs.Token)
 
 	// Write credentials to tmp file to be picked up by the 'gcloud' command.
 	// This is inside the ephemeral plugin container, not on the host.
-	err := ioutil.WriteFile(keyPath, []byte(vargs.Token), 0600)
+	err = ioutil.WriteFile(keyPath, []byte(vargs.Token), 0600)
 	if err != nil {
 		return fmt.Errorf("error writing token file: %s\n", err)
 	}
@@ -154,7 +135,7 @@ func wrapMain() error {
 		}
 	}()
 
-	runner := NewEnviron(filepath.Join(workspace.Path, vargs.Dir), os.Environ(),
+	runner := NewEnviron(filepath.Join(workspace, vargs.Dir), os.Environ(),
 		os.Stdout, os.Stderr)
 
 	// setup gcloud with our service account so we can use it for an access token
@@ -173,6 +154,101 @@ func wrapMain() error {
 
 }
 
+func configFromStdin(vargs *GAE, workspace *string) error {
+	// https://godoc.org/github.com/drone/drone-plugin-go/plugin
+	workspaceInfo := plugin.Workspace{}
+	plugin.Param("workspace", &workspaceInfo)
+	plugin.Param("vargs", vargs)
+	// Note this hangs if no cli args or input on STDIN
+	plugin.MustParse()
+
+	*workspace = workspaceInfo.Path
+
+	return nil
+}
+
+// GAE struct has different json for these, so use an intermediate
+type dummyGAE struct {
+	AddlArgs map[string]string `json:"-"`
+	AEEnv    map[string]string `json:"-"`
+}
+
+func configFromEnv(vargs *GAE, workspace *string) error {
+
+	// drone plugin input format du jour:
+	// http://readme.drone.io/plugins/plugin-parameters/
+
+	// corresponds to `project: xxx` parameter in drone config
+	vargs.Project = os.Getenv("PLUGIN_PROJECT")
+	vargs.Action = os.Getenv("PLUGIN_ACTION")
+
+	// secrets are not prefixed
+	vargs.Token = os.Getenv("TOKEN")
+
+	dummyVargs := dummyGAE{}
+
+	addlArgs := os.Getenv("PLUGIN_ADDL_ARGS")
+	if addlArgs != "" {
+		if err := json.Unmarshal([]byte(addlArgs), &dummyVargs.AddlArgs); err != nil {
+			return fmt.Errorf("could not parse param addl_args into a map[string]string")
+		}
+		vargs.AddlArgs = dummyVargs.AddlArgs
+	}
+
+	AEEnv := os.Getenv("PLUGIN_AE_ENVIRONMENT")
+	if AEEnv != "" {
+		if err := json.Unmarshal([]byte(AEEnv), &dummyVargs.AEEnv); err != nil {
+			return fmt.Errorf("could not parse param ae_environment into a map[string]string")
+		}
+		vargs.AEEnv = dummyVargs.AEEnv
+	}
+
+	// Pity the fool whose list values include commas
+	vargs.AddlFlags = strings.Split(os.Getenv("PLUGIN_ADDL_FLAGS"), ",")
+	vargs.SubCommands = strings.Split(os.Getenv("PLUGIN_SUB_COMMANDS"), ",")
+
+	vargs.Version = os.Getenv("PLUGIN_VERSION")
+	vargs.FlexImage = os.Getenv("PLUGIN_FLEX_IMAGE")
+	vargs.AppFile = os.Getenv("PLUGIN_APP_FILE")
+	vargs.CronFile = os.Getenv("PLUGIN_CRON_FILE")
+	vargs.DispatchFile = os.Getenv("PLUGIN_DISPATCH_FILE")
+	vargs.Dir = os.Getenv("PLUGIN_DIR")
+	vargs.AppCfgCmd = os.Getenv("PLUGIN_APPCFG_CMD")
+	vargs.GCloudCmd = os.Getenv("PLUGIN_GCLOUD_CMD")
+
+	*workspace = os.Getenv("DRONE_WORKSPACE")
+
+	return nil
+}
+
+func validateVargs(vargs *GAE) error {
+
+	if vargs.Token == "" {
+		return fmt.Errorf("missing required param: token")
+	}
+
+	if vargs.Project == "" {
+		vargs.Project = getProjectFromToken(vargs.Token)
+	}
+	if vargs.Project == "" {
+		return fmt.Errorf("project id not found in token or param")
+	}
+
+	if vargs.Action == "" {
+		return fmt.Errorf("missing required param: action")
+	}
+
+	if vargs.AppCfgCmd == "" {
+		vargs.AppCfgCmd = "/go_appengine/appcfg.py"
+	}
+
+	if vargs.GCloudCmd == "" {
+		vargs.GCloudCmd = "/google-cloud-sdk/bin/gcloud"
+	}
+
+	return nil
+}
+
 var gcloudCmds = map[string]bool{
 	"deploy":    true,
 	"services":  true,
@@ -180,7 +256,7 @@ var gcloudCmds = map[string]bool{
 	"instances": true,
 }
 
-func runGcloud(runner *Environ, workspace plugin.Workspace, vargs GAE) error {
+func runGcloud(runner *Environ, workspace string, vargs GAE) error {
 	// add the action first (gcloud app X)
 	args := []string{
 		"app",
@@ -240,7 +316,7 @@ func runGcloud(runner *Environ, workspace plugin.Workspace, vargs GAE) error {
 	return nil
 }
 
-func runAppCfg(runner *Environ, workspace plugin.Workspace, vargs GAE) error {
+func runAppCfg(runner *Environ, workspace string, vargs GAE) error {
 	// get access token string to pass along to `appcfg.py`
 	tokenCmd := exec.Command(vargs.GCloudCmd, "auth", "print-access-token")
 	var accessToken bytes.Buffer
@@ -310,10 +386,10 @@ func getProjectFromToken(j string) string {
 // some app engine commands are weird and require the app file to be named
 // 'app.yaml'. If an app file is given and it does not equal that, we need
 // to copy it there
-func setupAppFile(workspace plugin.Workspace, vargs GAE) error {
+func setupAppFile(workspace string, vargs GAE) error {
 	if vargs.AppFile != "app.yaml" && vargs.AppFile != "" {
-		orig := filepath.Join(workspace.Path, vargs.Dir, vargs.AppFile)
-		dest := filepath.Join(workspace.Path, vargs.Dir, "app.yaml")
+		orig := filepath.Join(workspace, vargs.Dir, vargs.AppFile)
+		dest := filepath.Join(workspace, vargs.Dir, "app.yaml")
 		err := copyFile(dest, orig)
 		if err != nil {
 			return fmt.Errorf("error moving app file: %s\n", err)
@@ -323,10 +399,10 @@ func setupAppFile(workspace plugin.Workspace, vargs GAE) error {
 }
 
 // Useful for differentiating between prd and dev cron versions for GCP appengine
-func setupCronFile(workspace plugin.Workspace, vargs GAE) error {
+func setupCronFile(workspace string, vargs GAE) error {
 	if vargs.CronFile != "cron.yaml" && vargs.CronFile != "" {
-		orig := filepath.Join(workspace.Path, vargs.Dir, vargs.CronFile)
-		dest := filepath.Join(workspace.Path, vargs.Dir, "cron.yaml")
+		orig := filepath.Join(workspace, vargs.Dir, vargs.CronFile)
+		dest := filepath.Join(workspace, vargs.Dir, "cron.yaml")
 		err := copyFile(dest, orig)
 		if err != nil {
 			return fmt.Errorf("error moving cron file: %s\n", err)
@@ -336,10 +412,10 @@ func setupCronFile(workspace plugin.Workspace, vargs GAE) error {
 }
 
 // Useful for differentiating between prd and dev dispatch versions for GCP appengine
-func setupDispatchFile(workspace plugin.Workspace, vargs GAE) error {
+func setupDispatchFile(workspace string, vargs GAE) error {
 	if vargs.DispatchFile != "dispatch.yaml" && vargs.DispatchFile != "" {
-		orig := filepath.Join(workspace.Path, vargs.Dir, vargs.DispatchFile)
-		dest := filepath.Join(workspace.Path, vargs.Dir, "dispatch.yaml")
+		orig := filepath.Join(workspace, vargs.Dir, vargs.DispatchFile)
+		dest := filepath.Join(workspace, vargs.Dir, "dispatch.yaml")
 		err := copyFile(dest, orig)
 		if err != nil {
 			return fmt.Errorf("error moving dispatch file: %s\n", err)
