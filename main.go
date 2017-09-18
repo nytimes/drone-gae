@@ -90,7 +90,6 @@ func wrapMain() error {
 	}
 
 	fmt.Printf("Drone GAE Plugin built from %s\n", rev)
-	fmt.Println(os.Environ())
 
 	vargs := GAE{}
 	workspace := ""
@@ -167,7 +166,7 @@ func configFromStdin(vargs *GAE, workspace *string) error {
 	return nil
 }
 
-// GAE struct has different json for these, so use an intermediate
+// GAE struct has different json for these, so use an intermediate for the new drone format
 type dummyGAE struct {
 	AddlArgs map[string]string `json:"-"`
 	AEEnv    map[string]string `json:"-"`
@@ -225,9 +224,9 @@ func validateVargs(vargs *GAE) error {
 
 	if vargs.Project == "" {
 		vargs.Project = getProjectFromToken(vargs.Token)
-	}
-	if vargs.Project == "" {
-		return fmt.Errorf("project id not found in token or param")
+		if vargs.Project == "" {
+			return fmt.Errorf("project id not found in token or param")
+		}
 	}
 
 	if vargs.Action == "" {
