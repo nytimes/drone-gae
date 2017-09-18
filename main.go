@@ -178,15 +178,22 @@ func configFromEnv(vargs *GAE, workspace *string) error {
 	// drone plugin input format du jour:
 	// http://readme.drone.io/plugins/plugin-parameters/
 
-	// corresponds to `project: xxx` parameter in drone config
+	// Strings
 	vargs.Project = os.Getenv("PLUGIN_PROJECT")
 	vargs.Action = os.Getenv("PLUGIN_ACTION")
+	*workspace = os.Getenv("DRONE_WORKSPACE")
+	vargs.Token = os.Getenv("GAE_CREDENTIALS") // secrets are not prefixed
+	vargs.Version = os.Getenv("PLUGIN_VERSION")
+	vargs.FlexImage = os.Getenv("PLUGIN_FLEX_IMAGE")
+	vargs.AppFile = os.Getenv("PLUGIN_APP_FILE")
+	vargs.CronFile = os.Getenv("PLUGIN_CRON_FILE")
+	vargs.DispatchFile = os.Getenv("PLUGIN_DISPATCH_FILE")
+	vargs.Dir = os.Getenv("PLUGIN_DIR")
+	vargs.AppCfgCmd = os.Getenv("PLUGIN_APPCFG_CMD")
+	vargs.GCloudCmd = os.Getenv("PLUGIN_GCLOUD_CMD")
 
-	// secrets are not prefixed
-	vargs.Token = os.Getenv("TOKEN")
-
+	// Maps
 	dummyVargs := dummyGAE{}
-
 	addlArgs := os.Getenv("PLUGIN_ADDL_ARGS")
 	if addlArgs != "" {
 		if err := json.Unmarshal([]byte(addlArgs), &dummyVargs.AddlArgs); err != nil {
@@ -203,20 +210,9 @@ func configFromEnv(vargs *GAE, workspace *string) error {
 		vargs.AEEnv = dummyVargs.AEEnv
 	}
 
-	// Pity the fool whose list values include commas
+	// Lists: pity the fool whose values include commas
 	vargs.AddlFlags = strings.Split(os.Getenv("PLUGIN_ADDL_FLAGS"), ",")
 	vargs.SubCommands = strings.Split(os.Getenv("PLUGIN_SUB_COMMANDS"), ",")
-
-	vargs.Version = os.Getenv("PLUGIN_VERSION")
-	vargs.FlexImage = os.Getenv("PLUGIN_FLEX_IMAGE")
-	vargs.AppFile = os.Getenv("PLUGIN_APP_FILE")
-	vargs.CronFile = os.Getenv("PLUGIN_CRON_FILE")
-	vargs.DispatchFile = os.Getenv("PLUGIN_DISPATCH_FILE")
-	vargs.Dir = os.Getenv("PLUGIN_DIR")
-	vargs.AppCfgCmd = os.Getenv("PLUGIN_APPCFG_CMD")
-	vargs.GCloudCmd = os.Getenv("PLUGIN_GCLOUD_CMD")
-
-	*workspace = os.Getenv("DRONE_WORKSPACE")
 
 	return nil
 }
