@@ -10,6 +10,16 @@ To see a full list of configuration settings for the project, check out the [GAE
 
 This is currently using `gcloud` version `145.0.0` and App Engine SDK version `1.9.48`.
 
+### Drone versions
+
+This plugin supports Drone 0.4 and 0.6+ (0.5 is deprecated).
+
+The examples below are for secrets in the 0.4 format, where the GCP Service Account json must be passed to the `token` parameter in .drone.yml, using the `$$SECRET_NAME` notation.
+
+For Drone 0.6+, the plugin expects credentials in the `GAE_CREDENTIALS` environment variable. See the [official documentation](http://docs.drone.io/manage-secrets/). Either: 
+  - Name the secret `GAE_CREDENTIALS` and inlclude it in the `secrets` block, or
+  - follow "Alternate Names" in the doc, setting the `target` to `GAE_CREDENTIALS`.
+
 ## Examples
 
 ### Basic example of capable of deploying a new version of a Go, PHP and Python 'hello, world' application to standard App Engine.
