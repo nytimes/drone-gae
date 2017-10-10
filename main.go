@@ -54,6 +54,10 @@ type GAE struct {
 	// is only required if your dispatch.yaml file is not named 'dispatch.yaml'.
 	DispatchFile string `json:"dispatch_file"`
 
+	// QueueFile is the name of the queue.yaml file to use for this deployment. This field
+	// is only required if your queue.yaml file is not named 'queue.yaml'.
+	QueueFile string `json:"queue_file"`
+
 	// Dir points to the directory the application exists in. This is only required if
 	// you application is not in the base directory.
 	Dir string `json:"dir"`
@@ -187,6 +191,7 @@ func configFromEnv(vargs *GAE, workspace *string) error {
 	vargs.AppFile = os.Getenv("PLUGIN_APP_FILE")
 	vargs.CronFile = os.Getenv("PLUGIN_CRON_FILE")
 	vargs.DispatchFile = os.Getenv("PLUGIN_DISPATCH_FILE")
+	vargs.QueueFile = os.Getenv("PLUGIN_QUEUE_FILE")
 	vargs.Dir = os.Getenv("PLUGIN_DIR")
 	vargs.AppCfgCmd = os.Getenv("PLUGIN_APPCFG_CMD")
 	vargs.GCloudCmd = os.Getenv("PLUGIN_GCLOUD_CMD")
@@ -303,6 +308,10 @@ func runGcloud(runner *Environ, workspace string, vargs GAE) error {
 		return err
 	}
 
+	if err := setupQueueFile(workspace, vargs); err != nil {
+		return err
+	}
+
 	err := runner.Run(vargs.GCloudCmd, args...)
 	if err != nil {
 		return fmt.Errorf("error: %s\n", err)
@@ -382,38 +391,34 @@ func getProjectFromToken(j string) string {
 // 'app.yaml'. If an app file is given and it does not equal that, we need
 // to copy it there
 func setupAppFile(workspace string, vargs GAE) error {
-	if vargs.AppFile != "app.yaml" && vargs.AppFile != "" {
-		orig := filepath.Join(workspace, vargs.Dir, vargs.AppFile)
-		dest := filepath.Join(workspace, vargs.Dir, "app.yaml")
-		err := copyFile(dest, orig)
-		if err != nil {
-			return fmt.Errorf("error moving app file: %s\n", err)
-		}
-	}
-	return nil
+	return setupFile(workspace, vargs, "app.yaml", vargs.AppFile)
 }
 
 // Useful for differentiating between prd and dev cron versions for GCP appengine
 func setupCronFile(workspace string, vargs GAE) error {
-	if vargs.CronFile != "cron.yaml" && vargs.CronFile != "" {
-		orig := filepath.Join(workspace, vargs.Dir, vargs.CronFile)
-		dest := filepath.Join(workspace, vargs.Dir, "cron.yaml")
-		err := copyFile(dest, orig)
-		if err != nil {
-			return fmt.Errorf("error moving cron file: %s\n", err)
-		}
-	}
-	return nil
+	return setupFile(workspace, vargs, "cron.yaml", vargs.CronFile)
 }
 
 // Useful for differentiating between prd and dev dispatch versions for GCP appengine
 func setupDispatchFile(workspace string, vargs GAE) error {
-	if vargs.DispatchFile != "dispatch.yaml" && vargs.DispatchFile != "" {
-		orig := filepath.Join(workspace, vargs.Dir, vargs.DispatchFile)
-		dest := filepath.Join(workspace, vargs.Dir, "dispatch.yaml")
+	return setupFile(workspace, vargs, "dispatch.yaml", vargs.DispatchFile)
+}
+
+// Useful for differentiating between prd and dev queue versions for GCP appengine
+func setupQueueFile(workspace string, vargs GAE) error {
+	return setupFile(workspace, vargs, "queue.yaml", vargs.QueueFile)
+}
+
+// setupFile is used to copy a user-supplied file to a GAE-expected file.
+// gaeName is the file name that GAE uses (ex: app.yaml, cron.yaml, default.yaml)
+// suppliedName is the name of the file that should be renamed (ex: stg-app.yaml)
+func setupFile(workspace string, vargs GAE, gaeName string, suppliedName string) error {
+	if suppliedName != gaeName && suppliedName != "" {
+		orig := filepath.Join(workspace, vargs.Dir, suppliedName)
+		dest := filepath.Join(workspace, vargs.Dir, gaeName)
 		err := copyFile(dest, orig)
 		if err != nil {
-			return fmt.Errorf("error moving dispatch file: %s\n", err)
+			return fmt.Errorf("error moving %q to %q: %s\n", suppliedName, gaeName, err)
 		}
 	}
 	return nil
