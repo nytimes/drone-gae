@@ -29,9 +29,9 @@ type GAE struct {
 	// Version is used to set the version of new deployments
 	// or to alter existing deployments.
 	Version string `json:"version"`
-	// AEEnv allows users to set additional environment variables
+	// AEEnv allows users to set additional environment variables with `appcfg.py -E`
 	// in their App Engine environment. This can be useful for injecting
-	// secrets from your Drone secret store.
+	// secrets from your Drone secret store. No effect with `gcloud` commands.
 	AEEnv map[string]string `json:"ae_environment"`
 	// SubCommands are optionally used with `gcloud app` Actions to produce
 	// complex commands like `gcloud app instances delete ...`.
