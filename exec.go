@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-var reRedact = regexp.MustCompile(`(oauth2_access_token)\s+\S+\s+`)
+var reRedact = regexp.MustCompile(`(?:^|\s+)(-E\s+\S+:|--oauth2_access_token\s+)\S+`)
 
 type Environ struct {
 	dir    string
@@ -28,7 +28,7 @@ func NewEnviron(dir string, env []string, stdout, stderr io.Writer) *Environ {
 
 // Run executes the given program.
 func (e *Environ) Run(name string, arg ...string) error {
-	displayArg := reRedact.ReplaceAll([]byte(strings.Trim(fmt.Sprint(arg), "[]")), []byte("$1 [redacted] "))
+	displayArg := reRedact.ReplaceAllString(strings.Trim(fmt.Sprint(arg), "[]"), " $1 [redacted] ")
 	fmt.Printf("Running Command: %s %s\n", name, displayArg)
 	cmd := exec.Command(name, arg...)
 	cmd.Dir = e.dir
