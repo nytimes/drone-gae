@@ -421,8 +421,12 @@ func setupQueueFile(workspace string, vargs GAE) error {
 // If any template variables are provided, the file will be parsed and executed as
 // a text/template with the variables injected.
 func setupFile(workspace string, vargs GAE, gaeName string, suppliedName string) error {
+	// if no file given, give up
+	if suppliedName == "" {
+		return nil
+	}
 	dest := filepath.Join(workspace, vargs.Dir, gaeName)
-	if suppliedName != gaeName && suppliedName != "" {
+	if suppliedName != gaeName {
 		orig := filepath.Join(workspace, vargs.Dir, suppliedName)
 		err := copyFile(dest, orig)
 		if err != nil {
