@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/drone/drone-plugin-go/plugin"
 )
@@ -39,6 +40,11 @@ type GAE struct {
 	// FlexImage tells the plugin where to pull the image from when deploying a Flexible
 	// VM instance. Example value: 'gcr.io/nyt-games-dev/puzzles-sub:$COMMIT'
 	FlexImage string `json:"flex_image"`
+	// TemplateVars allows users to pass a set of key/values to be injected into the
+	// various yaml configuration files. To use, the keys in this map must be referenced
+	// in the yaml files with Go's templating syntax. For example, the key "ABC" would be
+	// referenced with {{ .ABC }}.
+	TemplateVars map[string]interface{} `json:"vars"`
 
 	// AppFile is the name of the app.yaml file to use for this deployment. This field
 	// is only required if your app.yaml file is not named 'app.yaml'. Sometimes it is
@@ -412,15 +418,40 @@ func setupQueueFile(workspace string, vargs GAE) error {
 // setupFile is used to copy a user-supplied file to a GAE-expected file.
 // gaeName is the file name that GAE uses (ex: app.yaml, cron.yaml, default.yaml)
 // suppliedName is the name of the file that should be renamed (ex: stg-app.yaml)
+// If any template variables are provided, the file will be parsed and executed as
+// a text/template with the variables injected.
 func setupFile(workspace string, vargs GAE, gaeName string, suppliedName string) error {
+	dest := filepath.Join(workspace, vargs.Dir, gaeName)
 	if suppliedName != gaeName && suppliedName != "" {
 		orig := filepath.Join(workspace, vargs.Dir, suppliedName)
-		dest := filepath.Join(workspace, vargs.Dir, gaeName)
 		err := copyFile(dest, orig)
 		if err != nil {
 			return fmt.Errorf("error moving %q to %q: %s\n", suppliedName, gaeName, err)
 		}
 	}
+
+	// now that the file is in the right spot, we can inject any available TemplateVars.
+	blob, err := ioutil.ReadFile(dest)
+	if err != nil {
+		return fmt.Errorf("Error reading template: %s\n", err)
+	}
+
+	tmpl, err := template.New(gaeName).Option("missingkey=error").Parse(string(blob))
+	if err != nil {
+		return fmt.Errorf("Error parsing template: %s\n", err)
+	}
+
+	out, err := os.OpenFile(dest, os.O_TRUNC|os.O_RDWR, 0755)
+	if err != nil {
+		return fmt.Errorf("Error opening template: %s\n", err)
+	}
+	defer out.Close()
+
+	err = tmpl.Execute(out, vargs.TemplateVars)
+	if err != nil {
+		return fmt.Errorf("Error executing template: %s\n", err)
+	}
+
 	return nil
 }
 
