@@ -44,7 +44,7 @@ type GAE struct {
 	// various yaml configuration files. To use, the keys in this map must be referenced
 	// in the yaml files with Go's templating syntax. For example, the key "ABC" would be
 	// referenced with {{ .ABC }}.
-	TemplateVars map[string]string
+	TemplateVars map[string]interface{}
 
 	// AppFile is the name of the app.yaml file to use for this deployment. This field
 	// is only required if your app.yaml file is not named 'app.yaml'. Sometimes it is
