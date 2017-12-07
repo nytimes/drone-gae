@@ -132,9 +132,7 @@ func TestSetupFile(t *testing.T) {
   yes: {{ .Yes }}`,
 			givenVars: map[string]interface{}{},
 
-			wantError: false,
-			wantOutput: `app:
-  yes: {{ .Yes }}`,
+			wantError: true,
 		},
 		{
 			name: "vars but references wrong in template",
@@ -145,8 +143,6 @@ func TestSetupFile(t *testing.T) {
 			},
 
 			wantError: true,
-			wantOutput: `app:
-  yes: {{ .Yes }}`,
 		},
 	}
 

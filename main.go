@@ -44,7 +44,7 @@ type GAE struct {
 	// various yaml configuration files. To use, the keys in this map must be referenced
 	// in the yaml files with Go's templating syntax. For example, the key "ABC" would be
 	// referenced with {{ .ABC }}.
-	TemplateVars map[string]interface{}
+	TemplateVars map[string]interface{} `json:"vars"`
 
 	// AppFile is the name of the app.yaml file to use for this deployment. This field
 	// is only required if your app.yaml file is not named 'app.yaml'. Sometimes it is
@@ -428,11 +428,6 @@ func setupFile(workspace string, vargs GAE, gaeName string, suppliedName string)
 		if err != nil {
 			return fmt.Errorf("error moving %q to %q: %s\n", suppliedName, gaeName, err)
 		}
-	}
-
-	// if no templating variables, just return
-	if len(vargs.TemplateVars) == 0 {
-		return nil
 	}
 
 	// now that the file is in the right spot, we can inject any available TemplateVars.
