@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"os"
 	"reflect"
 	"testing"
@@ -91,28 +92,105 @@ func TestValidateVargs(t *testing.T) {
 	assert.Equal(t, "my-other-project", vargs.Project)
 }
 
-/*
-//This works in regular go, but not under go test for some reason
-//plugin.MustParse() panics due to stdin EOF
-func TestStdinInput(t *testing.T) {
+func TestSetupFile(t *testing.T) {
+	tests := []struct {
+		name string
 
-	tmpfile, _ := ioutil.TempFile("", "stdintest")
-	tmpfileName := tmpfile.Name()
-	defer os.Remove(tmpfileName)
-	tmpfile.Write([]byte(`{"workspace":{"path":"/dev/null"}}`))
-	tmpfile.Close()
+		givenContents string
+		givenVars     map[string]interface{}
 
-	fakeStdin, err := os.Open(tmpfileName)
-	if err != nil {
-		t.Error(err)
+		wantError  bool
+		wantOutput string
+	}{
+		{
+			name: "happy path",
+			givenContents: `app:
+  yes: {{ .Yes }}`,
+			givenVars: map[string]interface{}{
+				"Yes": true,
+			},
+
+			wantError: false,
+			wantOutput: `app:
+  yes: true`,
+		},
+		{
+			name: "vars but no references in template",
+			givenContents: `app:
+  yes: true`,
+			givenVars: map[string]interface{}{
+				"Yes": true,
+			},
+
+			wantError: false,
+			wantOutput: `app:
+  yes: true`,
+		},
+		{
+			name: "no vars but references in template",
+			givenContents: `app:
+  yes: {{ .Yes }}`,
+			givenVars: map[string]interface{}{},
+
+			wantError: false,
+			wantOutput: `app:
+  yes: {{ .Yes }}`,
+		},
+		{
+			name: "vars but references wrong in template",
+			givenContents: `app:
+  yes: {{ .Yes }}`,
+			givenVars: map[string]interface{}{
+				"No": "no",
+			},
+
+			wantError: true,
+			wantOutput: `app:
+  yes: {{ .Yes }}`,
+		},
 	}
-	//os.Stdin.Close()
-	os.Stdin = fakeStdin
 
-	vargs := GAE{}
-	workspace := ""
-	configFromStdin(&vargs, &workspace)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tf, err := ioutil.TempFile(".", "test-setup")
+			if err != nil {
+				t.Fatalf("unable to create temp file: %s", err)
+			}
+			defer os.Remove(tf.Name())
 
-	assert.Equal(t, "/dev/null", workspace)
+			_, err = tf.Write([]byte(test.givenContents))
+			if err != nil {
+				t.Fatalf("unable to write to temp file: %s", err)
+			}
+			err = tf.Close()
+			if err != nil {
+				t.Fatalf("unable to close temp file: %s", err)
+			}
+
+			// run test, only testing templating. we know file rename works
+			gotErr := setupFile("", GAE{TemplateVars: test.givenVars}, tf.Name(), tf.Name())
+
+			gotOutput, err := ioutil.ReadFile(tf.Name())
+			if err != nil {
+				t.Fatalf("unable to read temp file: %s", err)
+			}
+
+			if test.wantError && gotErr == nil {
+				t.Error("expected error but got none")
+			}
+			// no need to check payload
+			if test.wantError {
+				return
+			}
+			if !test.wantError && gotErr != nil {
+				t.Errorf("expected not error but one: %s", gotErr)
+			}
+
+			if string(gotOutput) != test.wantOutput {
+				t.Errorf("expected file contents:\n%q\n\ngot:\n\n%q",
+					test.wantOutput, string(gotOutput))
+			}
+		})
+	}
+
 }
-*/

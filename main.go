@@ -418,6 +418,8 @@ func setupQueueFile(workspace string, vargs GAE) error {
 // setupFile is used to copy a user-supplied file to a GAE-expected file.
 // gaeName is the file name that GAE uses (ex: app.yaml, cron.yaml, default.yaml)
 // suppliedName is the name of the file that should be renamed (ex: stg-app.yaml)
+// If any template variables are provided, the file will be parsed and executed as
+// a text/template with the variables injected.
 func setupFile(workspace string, vargs GAE, gaeName string, suppliedName string) error {
 	dest := filepath.Join(workspace, vargs.Dir, gaeName)
 	if suppliedName != gaeName && suppliedName != "" {
@@ -444,7 +446,7 @@ func setupFile(workspace string, vargs GAE, gaeName string, suppliedName string)
 		return fmt.Errorf("Error parsing template: %s\n", err)
 	}
 
-	out, err := os.Open(dest)
+	out, err := os.OpenFile(dest, os.O_TRUNC|os.O_RDWR, 0755)
 	if err != nil {
 		return fmt.Errorf("Error opening template: %s\n", err)
 	}
