@@ -272,7 +272,9 @@ func runGcloud(runner *Environ, workspace string, vargs GAE) error {
 	// Add subcommands to we can make complex calls like
 	// 'gcloud app services X Y Z ...'
 	for _, cmd := range vargs.SubCommands {
-		args = append(args, cmd)
+		if len(cmd) > 0 {
+			args = append(args, cmd)
+		}
 	}
 
 	// add the app.yaml location
