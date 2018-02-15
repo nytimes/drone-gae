@@ -28,7 +28,7 @@ func NewEnviron(dir string, env []string, stdout, stderr io.Writer) *Environ {
 
 // Run executes the given program.
 func (e *Environ) Run(name string, arg ...string) error {
-	displayArg := reRedact.ReplaceAllString(strings.Trim(fmt.Sprint(arg), "[]"), " $1 [redacted] ")
+	displayArg := reRedact.ReplaceAllString(strings.Join(arg, " "), " $1 [redacted] ")
 	fmt.Printf("Running Command: %s %s\n", name, displayArg)
 	cmd := exec.Command(name, arg...)
 	cmd.Dir = e.dir
