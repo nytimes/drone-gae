@@ -14,10 +14,13 @@ func TestEnvInput(t *testing.T) {
 	// Ideally we wouldn't be messing with the overall test environment
 	// But I don't see a way to have a go subprocess with its own env
 
+	// test ENV Vars
+	os.Setenv("SECRET_VALUE", "abc123")
+
 	// Good parameters
 	os.Setenv("DRONE_WORKSPACE", "/dev/null")
 	os.Setenv("PLUGIN_AE_ENVIRONMENT", `{"key1":"value1", "key2":"value2"}`)
-	os.Setenv("PLUGIN_VARS", `{"key1":"value1", "key2":"value2"}`)
+	os.Setenv("PLUGIN_VARS", `{"key1":"$SECRET_VALUE", "key2":"value2"}`)
 	os.Setenv("PLUGIN_SUB_COMMANDS", "do,this,now,please")
 	os.Setenv("GAE_CREDENTIALS", "{}")
 
@@ -43,7 +46,7 @@ func TestEnvInput(t *testing.T) {
 	desiredAEEnv := map[string]string{"key1": "value1", "key2": "value2"}
 	assert.True(t, reflect.DeepEqual(vargs.AEEnv, desiredAEEnv))
 
-	desiredTemplateVars := map[string]interface{}{"key1": "value1", "key2": "value2"}
+	desiredTemplateVars := map[string]interface{}{"key1": "abc123", "key2": "value2"}
 	assert.True(t, reflect.DeepEqual(vargs.TemplateVars, desiredTemplateVars))
 
 	desiredSubCommands := []string{"do", "this", "now", "please"}
