@@ -178,8 +178,9 @@ func configFromStdin(vargs *GAE, workspace *string) error {
 
 // GAE struct has different json for these, so use an intermediate for the new drone format
 type dummyGAE struct {
-	AddlArgs map[string]string `json:"-"`
-	AEEnv    map[string]string `json:"-"`
+	AddlArgs     map[string]string      `json:"-"`
+	AEEnv        map[string]string      `json:"-"`
+	TemplateVars map[string]interface{} `json:"-"`
 }
 
 func configFromEnv(vargs *GAE, workspace *string) error {
@@ -218,6 +219,14 @@ func configFromEnv(vargs *GAE, workspace *string) error {
 			return fmt.Errorf("could not parse param ae_environment into a map[string]string")
 		}
 		vargs.AEEnv = dummyVargs.AEEnv
+	}
+
+	templateVars := os.Getenv("PLUGIN_VARS")
+	if templateVars != "" {
+		if err := json.Unmarshal([]byte(templateVars), &dummyVargs.TemplateVars); err != nil {
+			return fmt.Errorf("could not parse param vars into a map[string]interface{}")
+		}
+		vargs.TemplateVars = dummyVargs.TemplateVars
 	}
 
 	// Lists: pity the fool whose values include commas
