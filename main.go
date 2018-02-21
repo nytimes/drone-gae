@@ -226,6 +226,15 @@ func configFromEnv(vargs *GAE, workspace *string) error {
 		if err := json.Unmarshal([]byte(templateVars), &dummyVargs.TemplateVars); err != nil {
 			return fmt.Errorf("could not parse param vars into a map[string]interface{}")
 		}
+
+		// expand any env vars in template variable values
+		for k, v := range dummyVargs.TemplateVars {
+			if v, ok := v.(string); ok {
+				if s := os.ExpandEnv(v); s != "" {
+					dummyVargs.TemplateVars[k] = os.ExpandEnv(v)
+				}
+			}
+		}
 		vargs.TemplateVars = dummyVargs.TemplateVars
 	}
 
