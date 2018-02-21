@@ -228,8 +228,8 @@ func configFromEnv(vargs *GAE, workspace *string) error {
 		}
 
 		// expand any env vars in template variable values
-		for k := range dummyVargs.TemplateVars {
-			if v, ok := dummyVargs.TemplateVars[k].(string); ok {
+		for k, v := range dummyVargs.TemplateVars {
+			if v, ok := v.(string); ok {
 				if s := os.ExpandEnv(v); s != "" {
 					dummyVargs.TemplateVars[k] = os.ExpandEnv(v)
 				}
