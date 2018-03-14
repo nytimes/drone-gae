@@ -218,6 +218,13 @@ func configFromEnv(vargs *GAE, workspace *string) error {
 		if err := json.Unmarshal([]byte(AEEnv), &dummyVargs.AEEnv); err != nil {
 			return fmt.Errorf("could not parse param ae_environment into a map[string]string")
 		}
+
+		// expand any env vars in template variable values
+		for k, v := range dummyVargs.AEEnv {
+			if s := os.ExpandEnv(v); s != "" {
+				dummyVargs.AEEnv[k] = os.ExpandEnv(v)
+			}
+		}
 		vargs.AEEnv = dummyVargs.AEEnv
 	}
 
