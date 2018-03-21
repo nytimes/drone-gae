@@ -1,5 +1,7 @@
 # drone-gae
 
+[![Build Status](https://travis-ci.org/NYTimes/drone-gae.svg?branch=master)](https://travis-ci.org/NYTimes/drone-gae)
+
 ### Manage deployments on Google App Engine via drone
 
 This plugin is a simple wrapper around the `appcfg.py` and `gcloud app` commands, which makes it capable of making deployments with Go, PHP or Python projects in the standard enviroment or any language in the flexible environment.
