@@ -322,11 +322,19 @@ func runGcloud(runner *Environ, workspace string, vargs GAE) error {
 	args = append(args, "--quiet")
 
 	// add the remaining arguments
-	for k, v := range vargs.AddlArgs {
-		args = append(args, k, v)
+	if len(vargs.AddlArgs) > 0 {
+		for k, v := range vargs.AddlArgs {
+			args = append(args, k, v)
+		}
 	}
-	for _, v := range vargs.AddlFlags {
-		args = append(args, v)
+
+	// add any additional singleton flags
+	if len(vargs.AddlFlags) > 0 {
+		for _, v := range vargs.AddlFlags {
+			if len(v) > 0 {
+				args = append(args, v)
+			}
+		}
 	}
 
 	if err := setupAppFile(workspace, vargs); err != nil {
