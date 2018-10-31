@@ -2,6 +2,8 @@ FROM google/cloud-sdk:alpine
 
 RUN apk add -U --no-cache unzip
 
+RUN gcloud components install app-engine-go
+
 ENV GOOGLE_APP_ENGINE_SDK_VERSION=1.9.68
 
 # Install the legacy app engine SDK
