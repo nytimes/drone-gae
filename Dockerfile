@@ -1,8 +1,6 @@
-FROM google/cloud-sdk:alpine
+FROM google/cloud-sdk:latest
 
-RUN apk add -U --no-cache unzip
-
-RUN gcloud components install app-engine-go
+RUN apt-get install -qqy unzip
 
 ENV GOOGLE_APP_ENGINE_SDK_VERSION=1.9.68
 
