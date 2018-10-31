@@ -274,7 +274,7 @@ func validateVargs(vargs *GAE) error {
 	}
 
 	if vargs.GCloudCmd == "" {
-		vargs.GCloudCmd = "/google-cloud-sdk/bin/gcloud"
+		vargs.GCloudCmd = "gcloud"
 	}
 
 	return nil
