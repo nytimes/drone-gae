@@ -1,6 +1,6 @@
-FROM google/cloud-sdk:latest
+FROM google/cloud-sdk:alpine
 
-RUN apt-get install -qqu unzip
+RUN apk add -U --no-cache unzip
 
 ENV GOOGLE_APP_ENGINE_SDK_VERSION=1.9.68
 
