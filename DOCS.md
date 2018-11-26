@@ -7,7 +7,11 @@
 The plugin expects the credential in the `GAE_CREDENTIALS` environment variable.
 See the [official documentation][docs-secrets] for uploading secrets.
 
+Creating and updating GAE applications requires specific GCP roles. Refer to GAE [Access Control](https://cloud.google.com/appengine/docs/flexible/python/access-control#primitive_roles) definitions to find out what role(s)
+the Service Account should be assigned. Use least permissible role for the tasks required.
+
 Either:
+
 - a) Name the secret `GAE_CREDENTIALS` and include it in the `secrets` block
 - b) Follow "Alternate Names" in the doc, setting the `target` to `GAE_CREDENTIALS`
 
