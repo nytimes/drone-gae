@@ -52,6 +52,11 @@ type GAE struct {
 	// and autoscaling configurations.
 	AppFile string `json:"app_file"`
 
+	// MaxVersions is an optional value that can be used along with the "deploy" action.
+	// If set to a non-zero value, the plugin will look up the versions of the deployed
+	// service and delete any older versions beyond the "max" value provided.
+	MaxVersions int `json:"max_versions"`
+
 	// CronFile is the name of the cron.yaml file to use for this deployment. This field
 	// is only required if your cron.yaml file is not named 'cron.yaml'
 	CronFile string `json:"cron_file"`
@@ -153,14 +158,25 @@ func wrapMain() error {
 		return fmt.Errorf("error: %s\n", err)
 	}
 
+	var serviceName string
 	// if gcloud app cmd, run it
-	if found := gcloudCmds[vargs.Action]; found {
-		return runGcloud(runner, workspace, vargs)
+	if gcloudCmds[vargs.Action] {
+		serviceName, err = runGcloud(runner, workspace, vargs)
+	} else {
+		// otherwise, do appcfg.py command
+		err = runAppCfg(runner, workspace, vargs)
 	}
 
-	// otherwise, do appcfg.py command
-	return runAppCfg(runner, workspace, vargs)
+	if err != nil {
+		return err
+	}
 
+	// check if MaxVersions is supplied + deploy action
+	if vargs.MaxVersions > 0 && serviceName != "" && vargs.Action == "deploy" {
+		return removeOldVersions(runner, workspace, serviceName, vargs)
+	}
+
+	return nil
 }
 
 func configFromStdin(vargs *GAE, workspace *string) error {
@@ -287,7 +303,7 @@ var gcloudCmds = map[string]bool{
 	"instances": true,
 }
 
-func runGcloud(runner *Environ, workspace string, vargs GAE) error {
+func runGcloud(runner *Environ, workspace string, vargs GAE) (string, error) {
 	// add the action first (gcloud app X)
 	args := []string{
 		"app",
@@ -338,27 +354,47 @@ func runGcloud(runner *Environ, workspace string, vargs GAE) error {
 	}
 
 	if err := setupAppFile(workspace, vargs); err != nil {
-		return err
+		return "", err
 	}
 
 	if err := setupCronFile(workspace, vargs); err != nil {
-		return err
+		return "", err
 	}
 
 	if err := setupDispatchFile(workspace, vargs); err != nil {
-		return err
+		return "", err
 	}
 
 	if err := setupQueueFile(workspace, vargs); err != nil {
-		return err
+		return "", err
 	}
-
+	var output bytes.Buffer
+	runner.stdout = &output
 	err := runner.Run(vargs.GCloudCmd, args...)
 	if err != nil {
-		return fmt.Errorf("error: %s\n", err)
+		return "", fmt.Errorf("error: %s\n", err)
 	}
 
-	return nil
+	// if this was a  deployment, grab the name of the service we just deployed
+	if vargs.Action == "deploy" {
+		var versions struct {
+			Versions []struct {
+				Service string `json:"service"`
+			}
+		}
+		err = json.NewDecoder(&output).Decode(versions)
+		if err != nil {
+			return "", err
+		}
+
+		if len(versions.Versions) == 0 {
+			return "", nil
+		}
+
+		return versions.Versions[0].Service, nil
+	}
+
+	return "", nil
 }
 
 func runAppCfg(runner *Environ, workspace string, vargs GAE) error {
