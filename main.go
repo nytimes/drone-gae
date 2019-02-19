@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -218,6 +219,7 @@ func configFromEnv(vargs *GAE, workspace *string) error {
 	vargs.Dir = os.Getenv("PLUGIN_DIR")
 	vargs.AppCfgCmd = os.Getenv("PLUGIN_APPCFG_CMD")
 	vargs.GCloudCmd = os.Getenv("PLUGIN_GCLOUD_CMD")
+	vargs.MaxVersions, _ = strconv.Atoi(os.Getenv("PLUGIN_MAX_VERSIONS"))
 
 	// Maps
 	dummyVargs := dummyGAE{}
@@ -382,7 +384,7 @@ func runGcloud(runner *Environ, workspace string, vargs GAE) (string, error) {
 				Service string `json:"service"`
 			}
 		}
-		err = json.NewDecoder(&output).Decode(versions)
+		err = json.NewDecoder(&output).Decode(&versions)
 		if err != nil {
 			return "", err
 		}

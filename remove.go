@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"strings"
 )
 
 func removeOldVersions(runner *Environ, workspace, service string, vargs GAE) error {
@@ -13,7 +12,8 @@ func removeOldVersions(runner *Environ, workspace, service string, vargs GAE) er
 	sout := runner.stdout
 	runner.stdout = &versionJSON
 	// look  up existing versions for given service ordered by create time desc
-	err := runner.Run(vargs.GCloudCmd, "app", "versions", "list", "--service", service,
+	err := runner.Run(vargs.GCloudCmd, "app", "versions", "list",
+		"--service", service, "--project", vargs.Project,
 		"--format", "json", "--sort-by", "~version.createTime", "--quiet")
 	if err != nil {
 		return fmt.Errorf("error: %s\n", err)
@@ -39,8 +39,10 @@ func removeOldVersions(runner *Environ, workspace, service string, vargs GAE) er
 	log.Printf("deleting %d versions: %s", len(toDelete), toDelete)
 
 	runner.stdout = sout
-	err = runner.Run(vargs.GCloudCmd, "app", "versions", "delete", "--service", service,
-		"--quiet", strings.Join(toDelete, " "))
+	args := []string{"app", "versions", "delete",
+		"--service", service, "--project", vargs.Project, "--quiet"}
+	args = append(args, toDelete...)
+	err = runner.Run(vargs.GCloudCmd, args...)
 	if err != nil {
 		return fmt.Errorf("error: %s\n", err)
 	}
