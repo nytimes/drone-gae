@@ -31,7 +31,7 @@ func removeOldVersions(runner *Environ, workspace, service string, vargs GAE) er
 	var toDelete []string
 	for i, res := range results {
 		// keep newer versions, the newly deployed version or anything that has traffic
-		if (i+1) < vargs.MaxVersions || res.ID == vargs.Version || res.TrafficSplit > 0 {
+		if i < vargs.MaxVersions || res.ID == vargs.Version || res.TrafficSplit > 0 {
 			continue
 		}
 		toDelete = append(toDelete, res.ID)
