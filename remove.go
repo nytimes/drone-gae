@@ -5,14 +5,39 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
+
+	"gopkg.in/yaml.v2"
 )
 
-func removeOldVersions(runner *Environ, workspace, service string, vargs GAE) error {
+func removeOldVersions(runner *Environ, workspace string, vargs GAE) error {
+	// read in the app.yaml file to grab the module/service mame we just deployed
+	appLoc := filepath.Join(workspace, vargs.Dir, "app.yaml")
+	appFile, err := os.Open(appLoc)
+	if err != nil {
+		return fmt.Errorf("error: %s\n", err)
+	}
+	defer appFile.Close()
+	var appStruct struct {
+		Service string `yaml:"service"`
+		Module  string `yaml:"module"`
+	}
+	err = yaml.NewDecoder(appFile).Decode(&appStruct)
+	if err != nil {
+		return fmt.Errorf("error: %s\n", err)
+	}
+
+	service := appStruct.Service
+	if service == "" {
+		service = appStruct.Module
+	}
+
+	// look  up existing versions for given service ordered by create time desc
 	var versionJSON bytes.Buffer
 	sout := runner.stdout
 	runner.stdout = &versionJSON
-	// look  up existing versions for given service ordered by create time desc
-	err := runner.Run(vargs.GCloudCmd, "app", "versions", "list",
+	err = runner.Run(vargs.GCloudCmd, "app", "versions", "list",
 		"--service", service, "--project", vargs.Project,
 		"--format", "json", "--sort-by", "~version.createTime", "--quiet")
 	if err != nil {

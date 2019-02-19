@@ -159,10 +159,9 @@ func wrapMain() error {
 		return fmt.Errorf("error: %s\n", err)
 	}
 
-	var serviceName string
 	// if gcloud app cmd, run it
 	if gcloudCmds[vargs.Action] {
-		serviceName, err = runGcloud(runner, workspace, vargs)
+		err = runGcloud(runner, workspace, vargs)
 	} else {
 		// otherwise, do appcfg.py command
 		err = runAppCfg(runner, workspace, vargs)
@@ -173,8 +172,8 @@ func wrapMain() error {
 	}
 
 	// check if MaxVersions is supplied + deploy action
-	if vargs.MaxVersions > 0 && serviceName != "" && vargs.Action == "deploy" {
-		return removeOldVersions(runner, workspace, serviceName, vargs)
+	if vargs.MaxVersions > 0 && (vargs.Action == "deploy" || vargs.Action == "update") {
+		return removeOldVersions(runner, workspace, vargs)
 	}
 
 	return nil
@@ -305,7 +304,7 @@ var gcloudCmds = map[string]bool{
 	"instances": true,
 }
 
-func runGcloud(runner *Environ, workspace string, vargs GAE) (string, error) {
+func runGcloud(runner *Environ, workspace string, vargs GAE) error {
 	// add the action first (gcloud app X)
 	args := []string{
 		"app",
@@ -336,8 +335,8 @@ func runGcloud(runner *Environ, workspace string, vargs GAE) (string, error) {
 		args = append(args, "--project", vargs.Project)
 	}
 
-	// add flag to prevent interactive + get JSON output
-	args = append(args, "--format", "json", "--quiet")
+	// add flag to prevent interactive
+	args = append(args, "--quiet")
 
 	// add the remaining arguments
 	if len(vargs.AddlArgs) > 0 {
@@ -356,47 +355,26 @@ func runGcloud(runner *Environ, workspace string, vargs GAE) (string, error) {
 	}
 
 	if err := setupAppFile(workspace, vargs); err != nil {
-		return "", err
+		return err
 	}
 
 	if err := setupCronFile(workspace, vargs); err != nil {
-		return "", err
+		return err
 	}
 
 	if err := setupDispatchFile(workspace, vargs); err != nil {
-		return "", err
+		return err
 	}
 
 	if err := setupQueueFile(workspace, vargs); err != nil {
-		return "", err
+		return err
 	}
-	var output bytes.Buffer
-	runner.stdout = &output
+
 	err := runner.Run(vargs.GCloudCmd, args...)
 	if err != nil {
-		return "", fmt.Errorf("error: %s\n", err)
+		return fmt.Errorf("error: %s\n", err)
 	}
-
-	// if this was a  deployment, grab the name of the service we just deployed
-	if vargs.Action == "deploy" {
-		var versions struct {
-			Versions []struct {
-				Service string `json:"service"`
-			}
-		}
-		err = json.NewDecoder(&output).Decode(&versions)
-		if err != nil {
-			return "", err
-		}
-
-		if len(versions.Versions) == 0 {
-			return "", nil
-		}
-
-		return versions.Versions[0].Service, nil
-	}
-
-	return "", nil
+	return nil
 }
 
 func runAppCfg(runner *Environ, workspace string, vargs GAE) error {
