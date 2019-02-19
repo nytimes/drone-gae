@@ -334,8 +334,8 @@ func runGcloud(runner *Environ, workspace string, vargs GAE) (string, error) {
 		args = append(args, "--project", vargs.Project)
 	}
 
-	// add flag to prevent interactive
-	args = append(args, "--quiet")
+	// add flag to prevent interactive + get JSON output
+	args = append(args, "--format", "json", "--quiet")
 
 	// add the remaining arguments
 	if len(vargs.AddlArgs) > 0 {
