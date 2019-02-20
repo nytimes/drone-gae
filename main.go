@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -51,6 +52,14 @@ type GAE struct {
 	// helpful to have a different `app.yaml` file per project for different environment
 	// and autoscaling configurations.
 	AppFile string `json:"app_file"`
+
+	// MaxVersions is an optional value that can be used along with the "deploy" or
+	// "update" actions. If set to a non-zero value, the plugin will look up the versions
+	// of the deployed service and delete any older versions beyond the "max" value
+	// provided. If any of the "older" versions that should be deleted are actually
+	// serving traffic, they will not be deleted. This may result in the actual version
+	// count being higher than the max listed here.
+	MaxVersions int `json:"max_versions"`
 
 	// CronFile is the name of the cron.yaml file to use for this deployment. This field
 	// is only required if your cron.yaml file is not named 'cron.yaml'
@@ -154,13 +163,23 @@ func wrapMain() error {
 	}
 
 	// if gcloud app cmd, run it
-	if found := gcloudCmds[vargs.Action]; found {
-		return runGcloud(runner, workspace, vargs)
+	if gcloudCmds[vargs.Action] {
+		err = runGcloud(runner, workspace, vargs)
+	} else {
+		// otherwise, do appcfg.py command
+		err = runAppCfg(runner, workspace, vargs)
 	}
 
-	// otherwise, do appcfg.py command
-	return runAppCfg(runner, workspace, vargs)
+	if err != nil {
+		return err
+	}
 
+	// check if MaxVersions is supplied + deploy action
+	if vargs.MaxVersions > 0 && (vargs.Action == "deploy" || vargs.Action == "update") {
+		return removeOldVersions(runner, workspace, vargs)
+	}
+
+	return nil
 }
 
 func configFromStdin(vargs *GAE, workspace *string) error {
@@ -202,6 +221,7 @@ func configFromEnv(vargs *GAE, workspace *string) error {
 	vargs.Dir = os.Getenv("PLUGIN_DIR")
 	vargs.AppCfgCmd = os.Getenv("PLUGIN_APPCFG_CMD")
 	vargs.GCloudCmd = os.Getenv("PLUGIN_GCLOUD_CMD")
+	vargs.MaxVersions, _ = strconv.Atoi(os.Getenv("PLUGIN_MAX_VERSIONS"))
 
 	// Maps
 	dummyVargs := dummyGAE{}
@@ -357,7 +377,6 @@ func runGcloud(runner *Environ, workspace string, vargs GAE) error {
 	if err != nil {
 		return fmt.Errorf("error: %s\n", err)
 	}
-
 	return nil
 }
 
