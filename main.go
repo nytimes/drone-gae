@@ -56,7 +56,9 @@ type GAE struct {
 	// MaxVersions is an optional value that can be used along with the "deploy" or
 	// "update" actions. If set to a non-zero value, the plugin will look up the versions
 	// of the deployed service and delete any older versions beyond the "max" value
-	// provided.
+	// provided. If any of the "older" versions that should be deleted is actually
+	// serving traffic, they will not be deleted. This may result in the actual version
+	// count being higher than the max listed here.
 	MaxVersions int `json:"max_versions"`
 
 	// CronFile is the name of the cron.yaml file to use for this deployment. This field

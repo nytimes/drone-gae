@@ -33,7 +33,7 @@ func removeOldVersions(runner *Environ, workspace string, vargs GAE) error {
 		service = appStruct.Module
 	}
 
-	// look  up existing versions for given service ordered by create time desc
+	// look up existing versions for given service ordered by create time desc
 	var versionJSON bytes.Buffer
 	sout := runner.stdout
 	runner.stdout = &versionJSON
@@ -61,6 +61,11 @@ func removeOldVersions(runner *Environ, workspace string, vargs GAE) error {
 		}
 		toDelete = append(toDelete, res.ID)
 	}
+
+	if len(toDelete) == 0 {
+		return nil
+	}
+
 	log.Printf("deleting %d versions: %s", len(toDelete), toDelete)
 
 	runner.stdout = sout
