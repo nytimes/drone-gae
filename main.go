@@ -300,7 +300,10 @@ func validateVargs(vargs *GAE) error {
 	}
 
 	if vargs.Version != "" {
-		v := strings.ToLower(vargs.Version)[:63]
+		v := strings.ToLower(vargs.Version)
+		if len(v) > 63 {
+			v = v[:63]
+		}
 		re := regexp.MustCompile(`[^a-z\d-]`)
 		vargs.Version = re.ReplaceAllString(v, "-")
 	}
