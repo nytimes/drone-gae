@@ -97,6 +97,16 @@ func TestValidateVargs(t *testing.T) {
 	assert.NoError(t, validateVargs(&vargs))
 	// Project field overrides token
 	assert.Equal(t, "my-other-project", vargs.Project)
+
+	// sanitize version
+	vargs = GAE{
+		Token:   "mytoken",
+		Project: "myproject",
+		Action:  "dostuff",
+		Version: "feature/PRJ-test.branch/name",
+	}
+	assert.NoError(t, validateVargs(&vargs))
+	assert.Equal(t, "feature-prj-test-branch-name", vargs.Version)
 }
 
 func TestSetupFile(t *testing.T) {
