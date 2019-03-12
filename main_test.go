@@ -103,10 +103,10 @@ func TestValidateVargs(t *testing.T) {
 		Token:   "mytoken",
 		Project: "myproject",
 		Action:  "dostuff",
-		Version: "feature/PRJ-test.branch/name",
+		Version: "feature/PRJ-test.branch/name-thatisreallyreally@#$%&*longandgetstrimmed",
 	}
 	assert.NoError(t, validateVargs(&vargs))
-	assert.Equal(t, "feature-prj-test-branch-name", vargs.Version)
+	assert.Equal(t, "feature-prj-test-branch-name-thatisreallyreally------longandget", vargs.Version)
 }
 
 func TestSetupFile(t *testing.T) {

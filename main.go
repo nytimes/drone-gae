@@ -31,7 +31,7 @@ type GAE struct {
 	AddlFlags []string `json:"addl_flags"`
 	// Version is used to set the version of new deployments
 	// or to alter existing deployments.
-	// the value will be sanitized (lowercase, replace `/` and `.` with `-`)
+	// value will be sanitized (lowercase, replace non-alphanumeric with `-`, max 63 chars)
 	Version string `json:"version"`
 	// AEEnv allows users to set additional environment variables with `appcfg.py -E`
 	// in their App Engine environment. This can be useful for injecting
@@ -300,9 +300,9 @@ func validateVargs(vargs *GAE) error {
 	}
 
 	if vargs.Version != "" {
-		re := regexp.MustCompile(`[/|.]`)
-		v := re.ReplaceAllString(vargs.Version, "-")
-		vargs.Version = strings.ToLower(v)
+		v := strings.ToLower(vargs.Version)[:63]
+		re := regexp.MustCompile(`[^a-z\d-]`)
+		vargs.Version = re.ReplaceAllString(v, "-")
 	}
 
 	return nil
