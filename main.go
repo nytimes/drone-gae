@@ -91,6 +91,8 @@ type GAE struct {
 	// AppCfgCmd is an optional override for the location of the App Engine appcfg.py
 	// tool. This may be useful if using a custom image.
 	AppCfgCmd string `json:"appcfg_cmd"`
+	// Beta is an optional flag to use the "gcloud beta" command
+	Beta bool `json:"beta"`
 }
 
 var (
@@ -225,6 +227,9 @@ func configFromEnv(vargs *GAE, workspace *string) error {
 	vargs.GCloudCmd = os.Getenv("PLUGIN_GCLOUD_CMD")
 	vargs.MaxVersions, _ = strconv.Atoi(os.Getenv("PLUGIN_MAX_VERSIONS"))
 
+	// Bool
+	vargs.Beta, _ = strconv.ParseBool(os.Getenv("PLUGIN_BETA"))
+
 	// Maps
 	dummyVargs := dummyGAE{}
 	addlArgs := os.Getenv("PLUGIN_ADDL_ARGS")
@@ -323,6 +328,11 @@ func runGcloud(runner *Environ, workspace string, vargs GAE) error {
 	args := []string{
 		"app",
 		vargs.Action,
+	}
+
+	// add optional beta flag
+	if vargs.Beta {
+		args = append([]string{"beta"}, args...)
 	}
 
 	// Add subcommands to we can make complex calls like
