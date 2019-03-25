@@ -1,6 +1,6 @@
 # drone-gae
 
-[![Build Status](https://travis-ci.org/NYTimes/drone-gae.svg?branch=master)](https://travis-ci.org/NYTimes/drone-gae)
+[![Build Status](https://travis-ci.org/nytimes/drone-gae.svg?branch=master)](https://travis-ci.org/nytimes/drone-gae)
 
 Drone plugin to manage deployments on Google App Engine.
 
