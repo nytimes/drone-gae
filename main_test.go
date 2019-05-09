@@ -117,6 +117,18 @@ func TestValidateVargs(t *testing.T) {
 	}
 	assert.NoError(t, validateVargs(&vargs))
 	assert.Equal(t, "feature-prj-test123", vargs.Version)
+
+	// sanitize version short string
+	vargs = GAE{
+		Token:   "mytoken",
+		Project: "myproject",
+		Action:  "dostuff",
+		Service: "myservice",
+		Version: "version1",
+	}
+	assert.NoError(t, validateVargs(&vargs))
+	assert.Equal(t, "version1", vargs.Version)
+	assert.Equal(t, "myservice", vargs.Service)
 }
 
 func TestSetupFile(t *testing.T) {
