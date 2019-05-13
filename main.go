@@ -34,7 +34,6 @@ type GAE struct {
 	// value will be sanitized (lowercase, replace non-alphanumeric with `-`, max 63 chars)
 	Version string `json:"version"`
 	// Service is used to set the service to be deployed
-	// value will be sanitized (lowercase, replace non-alphanumeric with `-`, max 63 chars)
 	Service string `json:"service"`
 	// AEEnv allows users to set additional environment variables with `appcfg.py -E`
 	// in their App Engine environment. This can be useful for injecting
