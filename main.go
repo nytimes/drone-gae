@@ -33,6 +33,8 @@ type GAE struct {
 	// or to alter existing deployments.
 	// value will be sanitized (lowercase, replace non-alphanumeric with `-`, max 63 chars)
 	Version string `json:"version"`
+	// Service is used to set the service to be deployed
+	Service string `json:"service"`
 	// AEEnv allows users to set additional environment variables with `appcfg.py -E`
 	// in their App Engine environment. This can be useful for injecting
 	// secrets from your Drone secret store. No effect with `gcloud` commands.
@@ -164,8 +166,8 @@ func wrapMain() error {
 		return fmt.Errorf("error: %s\n", err)
 	}
 
-	// if gcloud app cmd, run it
-	if gcloudCmds[vargs.Action] {
+	// if gcloud app cmd or group, run it
+	if gcloudCmds[vargs.Action] || gcloudGroups[vargs.Action] {
 		err = runGcloud(runner, workspace, vargs)
 	} else {
 		// otherwise, do appcfg.py command
@@ -311,11 +313,16 @@ func validateVargs(vargs *GAE) error {
 	return nil
 }
 
-var gcloudCmds = map[string]bool{
-	"deploy":    true,
+// Gcloud Groups
+var gcloudGroups = map[string]bool{
 	"services":  true,
 	"versions":  true,
 	"instances": true,
+}
+
+// Gcloud Commands
+var gcloudCmds = map[string]bool{
+	"deploy": true,
 }
 
 func runGcloud(runner *Environ, workspace string, vargs GAE) error {
@@ -337,8 +344,25 @@ func runGcloud(runner *Environ, workspace string, vargs GAE) error {
 	args = append(args, "./app.yaml")
 
 	// add a version if we've got one
+	// (requires passing args differently based on whether it's a group or plain command)
 	if vargs.Version != "" {
-		args = append(args, "--version", vargs.Version)
+		if gcloudCmds[vargs.Action] {
+			args = append(args, "--version", vargs.Version)
+		} else {
+			// it's a gcloud command for a group, treat it differently
+			args = append(args, vargs.Version)
+		}
+	}
+
+	// add a service if we've got one
+	// (requires passing args differently based on whether it's a group or plain command)
+	if vargs.Service != "" {
+		if gcloudCmds[vargs.Action] {
+			args = append(args, "--service", vargs.Service)
+		} else {
+			// it's a gcloud command for a group, treat it differently
+			args = append(args, vargs.Service)
+		}
 	}
 
 	if vargs.FlexImage != "" {
