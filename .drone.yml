@@ -6,6 +6,7 @@ workspace:
 build_config: &build_config
   image: golang:1
   environment:
+    - GO111MODULE=on
     - CGO_ENABLED=0
     - GOPATH=/go
   commands:
@@ -22,6 +23,7 @@ pipeline:
   test:
     image: golang:1
     environment:
+      - GO111MODULE=on
       - CGO_ENABLED=0
       - GOPATH=/go
     commands:
