@@ -1,0 +1,72 @@
+---
+workspace:
+  base: /go
+  path: src/github.com/NYTimes/drone-gae
+
+build_config: &build_config
+  image: golang:1
+  environment:
+    - CGO_ENABLED=0
+    - GOPATH=/go
+  commands:
+    - go build -a -ldflags "-X main.version=${DRONE_TAG:-other} -X main.rev=${DRONE_COMMIT}"
+
+publish_config: &publish_config
+  image: plugins/docker
+  repo: nytimes/drone-gae
+  secrets:
+    - docker_username
+    - docker_password
+
+pipeline:
+  test:
+    image: golang:1
+    environment:
+      - CGO_ENABLED=0
+      - GOPATH=/go
+    commands:
+      - go vet
+      - go test -cover
+
+  build:
+    <<: *build_config
+    when:
+      branch:
+        - develop
+        - master
+
+  build_release:
+    <<: *build_config
+    when:
+      event: tag
+
+  publish_develop:
+    <<: *publish_config
+    tag:
+      - "develop"
+    when:
+      event: push
+      branch: develop
+
+  publish_latest:
+    <<: *publish_config
+    auto_tag: true
+
+  slack:
+    image: plugins/slack
+    channel: dv-notifications
+    secrets:
+      - slack_webhook
+    when:
+      branch:
+        - develop
+        - master
+
+  slack_tag:
+    image: plugins/slack
+    channel: dv-notifications
+    secrets:
+      - slack_webhook
+    when:
+      event:
+        - tag

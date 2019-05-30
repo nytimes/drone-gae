@@ -93,6 +93,9 @@ type GAE struct {
 	// AppCfgCmd is an optional override for the location of the App Engine appcfg.py
 	// tool. This may be useful if using a custom image.
 	AppCfgCmd string `json:"appcfg_cmd"`
+
+	// Beta is used by the gcloud command suite. If set, `gcloud beta app` will be used.
+	Beta bool `json:"beta"`
 }
 
 var (
@@ -326,11 +329,18 @@ var gcloudCmds = map[string]bool{
 }
 
 func runGcloud(runner *Environ, workspace string, vargs GAE) error {
-	// add the action first (gcloud app X)
-	args := []string{
+	var args []string
+
+	// if beta, add that command first so we get `gcloud beta ...`
+	if vargs.Beta {
+		args = append(args, "beta")
+	}
+
+	// add the app action (gcloud app X)
+	args = append(args, []string{
 		"app",
 		vargs.Action,
-	}
+	}...)
 
 	// Add subcommands to we can make complex calls like
 	// 'gcloud app services X Y Z ...'
