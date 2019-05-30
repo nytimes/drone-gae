@@ -35,21 +35,12 @@ pipeline:
     <<: *build_config
     when:
       branch:
-        - develop
         - master
 
   build_release:
     <<: *build_config
     when:
       event: tag
-
-  publish_develop:
-    <<: *publish_config
-    tag:
-      - "develop"
-    when:
-      event: push
-      branch: develop
 
   publish_latest:
     <<: *publish_config
@@ -62,7 +53,6 @@ pipeline:
       from_secret: slack_webhook
     when:
       branch:
-        - develop
         - master
 
   slack_tag:
