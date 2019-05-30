@@ -3,11 +3,6 @@ workspace:
   base: /go
   path: src/github.com/NYTimes/drone-gae
 
-build_config: &build_config
-
-
-publish_config: &publish_config
-
 pipeline:
   test:
     image: golang:1
@@ -30,8 +25,6 @@ pipeline:
       - go build -a -ldflags "-X main.version=${DRONE_TAG:-other} -X main.rev=${DRONE_COMMIT}"
     when:
       event: [push, tag]
-      branch:
-        - master
 
   publish:
     image: plugins/docker
