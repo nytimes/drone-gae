@@ -9,6 +9,7 @@ build_config: &build_config
     - CGO_ENABLED=0
     - GOPATH=/go
   commands:
+    - go mod download
     - go build -a -ldflags "-X main.version=${DRONE_TAG:-other} -X main.rev=${DRONE_COMMIT}"
 
 publish_config: &publish_config
@@ -30,9 +31,6 @@ pipeline:
 
   build:
     <<: *build_config
-    environment:
-      - CGO_ENABLED=0
-      - GOPATH=/go
     when:
       branch:
         - develop
