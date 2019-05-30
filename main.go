@@ -229,6 +229,7 @@ func configFromEnv(vargs *GAE, workspace *string) error {
 	vargs.AppCfgCmd = os.Getenv("PLUGIN_APPCFG_CMD")
 	vargs.GCloudCmd = os.Getenv("PLUGIN_GCLOUD_CMD")
 	vargs.MaxVersions, _ = strconv.Atoi(os.Getenv("PLUGIN_MAX_VERSIONS"))
+	vargs.Beta = os.Getenv("BETA") == "true"
 
 	// Maps
 	dummyVargs := dummyGAE{}
