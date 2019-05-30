@@ -49,8 +49,10 @@ pipeline:
   slack:
     image: plugins/slack
     channel: dv-notifications
-    webhook:
-      from_secret: slack_webhook
+    webhook: "$$SLACK_WEBHOOK"
+    secrets:
+      - source: slack_webhook
+        target: SLACK_WEBHOOK
     when:
       branch:
         - master
@@ -58,8 +60,11 @@ pipeline:
   slack_tag:
     image: plugins/slack
     channel: dv-notifications
-    webhook:
-      from_secret: slack_webhook
+    webhook: "$$SLACK_WEBHOOK"
+    secrets:
+      - source: slack_webhook
+        target: SLACK_WEBHOOK
+
     when:
       event:
         - tag
