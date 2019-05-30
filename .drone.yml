@@ -54,6 +54,7 @@ pipeline:
       - source: slack_webhook
         target: SLACK_WEBHOOK
     when:
+      event: push
       branch:
         - master
 
