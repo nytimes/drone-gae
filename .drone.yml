@@ -65,7 +65,6 @@ pipeline:
     secrets:
       - source: slack_webhook
         target: SLACK_WEBHOOK
-
     when:
       event:
         - tag
