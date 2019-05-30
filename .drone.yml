@@ -30,6 +30,9 @@ pipeline:
 
   build:
     <<: *build_config
+    environment:
+      - CGO_ENABLED=0
+      - GOPATH=/go
     when:
       branch:
         - develop
