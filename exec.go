@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-var reRedact = regexp.MustCompile(`(?:^|\s+)(-E\s+\S+:|--oauth2_access_token\s+)\S+`)
+var reRedact = regexp.MustCompile(`(?:^|\s+)(-E\s+\S+:|--oauth2_access_token\s+)({[\s\S]*}|\S+)`)
 
 type Environ struct {
 	dir    string
