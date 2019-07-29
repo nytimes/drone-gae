@@ -351,8 +351,15 @@ func runGcloud(runner *Environ, workspace string, vargs GAE) error {
 		}
 	}
 
-	// add the app.yaml location
-	args = append(args, "./app.yaml")
+	switch {
+	// hook in the apropro yaml file
+	case vargs.DispatchFile != "":
+		args = append(args, "./dispatch.yaml")
+	case vargs.CronFile != "":
+		args = append(args, "./cron.yaml")
+	default:
+		args = append(args, "./app.yaml")
+	}
 
 	// add a version if we've got one
 	// (requires passing args differently based on whether it's a group or plain command)
