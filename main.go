@@ -23,6 +23,7 @@ type GAE struct {
 	//
 	// appcfg.py (update, update_cron, update_indexes, set_default_version, etc.)
 	// gcloud app (deploy, services, versions, etc.)
+	// The appcfg.py commands are deprecated and will no longer work come Oct 2019.
 	Action string `json:"action"`
 	// AddlArgs is a set of key-value pairs to allow users to pass along any
 	// additional parameters to the `appcfg.py` command.
@@ -66,15 +67,18 @@ type GAE struct {
 	MaxVersions int `json:"max_versions"`
 
 	// CronFile is the name of the cron.yaml file to use for this deployment. This field
-	// is only required if your cron.yaml file is not named 'cron.yaml'
+	// is only required if your cron.yaml file is not named 'cron.yaml' or if you
+	// want to use the `action: deploy` configuration to deploy a cron.yaml change.
 	CronFile string `json:"cron_file"`
 
 	// DispatchFile is the name of the dispatch.yaml file to use for this deployment. This field
-	// is only required if your dispatch.yaml file is not named 'dispatch.yaml'.
+	// is only required if your dispatch.yaml file is not named 'dispatch.yaml' or if you
+	// want to use the `action: deploy` configuration to deploy a dispatch.yaml change.
 	DispatchFile string `json:"dispatch_file"`
 
 	// QueueFile is the name of the queue.yaml file to use for this deployment. This field
 	// is only required if your queue.yaml file is not named 'queue.yaml'.
+	// This field is deprecated and will no longer work come Oct 2019.
 	QueueFile string `json:"queue_file"`
 
 	// Dir points to the directory the application exists in. This is only required if
@@ -92,6 +96,7 @@ type GAE struct {
 	GCloudCmd string `json:"gcloud_cmd"`
 	// AppCfgCmd is an optional override for the location of the App Engine appcfg.py
 	// tool. This may be useful if using a custom image.
+	// This field is deprecated and will no longer work come Oct 2019.
 	AppCfgCmd string `json:"appcfg_cmd"`
 
 	// Beta is used by the gcloud command suite. If set, `gcloud beta app` will be used.
@@ -351,8 +356,15 @@ func runGcloud(runner *Environ, workspace string, vargs GAE) error {
 		}
 	}
 
-	// add the app.yaml location
-	args = append(args, "./app.yaml")
+	switch {
+	// hook in the apropro yaml file
+	case vargs.DispatchFile != "":
+		args = append(args, "./dispatch.yaml")
+	case vargs.CronFile != "":
+		args = append(args, "./cron.yaml")
+	default:
+		args = append(args, "./app.yaml")
+	}
 
 	// add a version if we've got one
 	// (requires passing args differently based on whether it's a group or plain command)
