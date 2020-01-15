@@ -1,4 +1,4 @@
-FROM google/cloud-sdk:latest
+FROM google/cloud-sdk:276.0.0
 
 RUN apt-get install -qqy unzip
 
