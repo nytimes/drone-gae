@@ -2,7 +2,7 @@
 
 The examples below are for secrets in the 0.4 format.
 
-The GCP Service Account JSON must be passed to the `token` parameter in .drone.yml using the `$$SECRET_NAME` notation.
+The GCP [Service Account JSON](https://cloud.google.com/iam/docs/creating-managing-service-account-keys) must be passed to the `token` parameter in .drone.yml using the `$$SECRET_NAME` notation.
 
 ## Basic example of capable of deploying a new version of a Go, PHP and Python 'hello, world' application to standard App Engine.
 
