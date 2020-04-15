@@ -220,26 +220,29 @@ func configFromEnv(vargs *GAE, workspace *string) error {
 	// https://0-8-0.docs.drone.io/plugin-overview/
 
 	// Strings
-	vargs.Project = os.Getenv("PLUGIN_PROJECT")
-	vargs.Action = os.Getenv("PLUGIN_ACTION")
 	*workspace = os.Getenv("DRONE_WORKSPACE")
 
-	vargs.Token = os.Getenv("PLUGIN_GAE_CREDENTIALS")
-	if vargs.Token == "" {
-		vargs.Token = os.Getenv("GAE_CREDENTIALS") // falling back to old env variable for drone 0.x compatibility
-	}
-
+	vargs.Action = os.Getenv("PLUGIN_ACTION")
 	vargs.Version = os.Getenv("PLUGIN_VERSION")
+	vargs.Service = os.Getenv("PLUGIN_SERVICE")
 	vargs.FlexImage = os.Getenv("PLUGIN_FLEX_IMAGE")
 	vargs.AppFile = os.Getenv("PLUGIN_APP_FILE")
+	vargs.MaxVersions, _ = strconv.Atoi(os.Getenv("PLUGIN_MAX_VERSIONS"))
 	vargs.CronFile = os.Getenv("PLUGIN_CRON_FILE")
 	vargs.DispatchFile = os.Getenv("PLUGIN_DISPATCH_FILE")
 	vargs.QueueFile = os.Getenv("PLUGIN_QUEUE_FILE")
 	vargs.Dir = os.Getenv("PLUGIN_DIR")
-	vargs.AppCfgCmd = os.Getenv("PLUGIN_APPCFG_CMD")
+	vargs.Project = os.Getenv("PLUGIN_PROJECT")
 	vargs.GCloudCmd = os.Getenv("PLUGIN_GCLOUD_CMD")
-	vargs.MaxVersions, _ = strconv.Atoi(os.Getenv("PLUGIN_MAX_VERSIONS"))
+	vargs.AppCfgCmd = os.Getenv("PLUGIN_APPCFG_CMD")
 	vargs.Beta = os.Getenv("PLUGIN_BETA") == "true"
+
+	vargs.Token = os.Getenv("PLUGIN_GAE_CREDENTIALS")
+	if vargs.Token == "" {
+		// falling back to old env variable for drone 0.x compatibility
+		// secrets are not prefixed
+		vargs.Token = os.Getenv("GAE_CREDENTIALS")
+	}
 
 	// Maps
 	dummyVargs := dummyGAE{}
