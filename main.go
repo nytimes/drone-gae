@@ -217,7 +217,7 @@ type dummyGAE struct {
 func configFromEnv(vargs *GAE, workspace *string) error {
 
 	// drone plugin input format du jour:
-	// https://docs.drone.io/plugins/overview/
+	// https://0-8-0.docs.drone.io/plugin-overview/
 
 	// Strings
 	vargs.Project = os.Getenv("PLUGIN_PROJECT")
