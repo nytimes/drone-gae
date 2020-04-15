@@ -22,7 +22,7 @@ func TestEnvInput(t *testing.T) {
 	os.Setenv("PLUGIN_AE_ENVIRONMENT", `{"key1":"value1", "key2":"value2"}`)
 	os.Setenv("PLUGIN_VARS", `{"key1":"$SECRET_VALUE", "key2":"value2"}`)
 	os.Setenv("PLUGIN_SUB_COMMANDS", "do,this,now,please")
-	os.Setenv("GAE_CREDENTIALS", "{}")
+	os.Setenv("PLUGIN_GAE_CREDENTIALS", "{}")
 
 	// Bad parameter
 	os.Setenv("PLUGIN_ADDL_ARGS", "stringthatshouldbejson")

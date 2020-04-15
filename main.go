@@ -223,7 +223,12 @@ func configFromEnv(vargs *GAE, workspace *string) error {
 	vargs.Project = os.Getenv("PLUGIN_PROJECT")
 	vargs.Action = os.Getenv("PLUGIN_ACTION")
 	*workspace = os.Getenv("DRONE_WORKSPACE")
-	vargs.Token = os.Getenv("GAE_CREDENTIALS") // secrets are not prefixed
+
+	vargs.Token = os.Getenv("PLUGIN_GAE_CREDENTIALS")
+	if vargs.Token == "" {
+		vargs.Token = os.Getenv("GAE_CREDENTIALS") // falling back to old env variable for drone 0.x compatibility
+	}
+
 	vargs.Version = os.Getenv("PLUGIN_VERSION")
 	vargs.FlexImage = os.Getenv("PLUGIN_FLEX_IMAGE")
 	vargs.AppFile = os.Getenv("PLUGIN_APP_FILE")
