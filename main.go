@@ -296,13 +296,13 @@ func configFromEnv(vargs *GAE, workspace *string) error {
 func validateVargs(vargs *GAE) error {
 
 	if vargs.Token == "" {
-		return fmt.Errorf("missing required param: token")
+		return fmt.Errorf("missing required credentials: GAE_CREDENTIALS or param token")
 	}
 
 	if vargs.Project == "" {
 		vargs.Project = getProjectFromToken(vargs.Token)
 		if vargs.Project == "" {
-			return fmt.Errorf("project id not found in token or param")
+			return fmt.Errorf("missing required project id: not found in credentials or param project")
 		}
 	}
 
@@ -557,23 +557,23 @@ func setupFile(workspace string, vargs GAE, gaeName string, suppliedName string)
 	// now that the file is in the right spot, we can inject any available TemplateVars.
 	blob, err := ioutil.ReadFile(dest)
 	if err != nil {
-		return fmt.Errorf("Error reading template: %s\n", err)
+		return fmt.Errorf("error reading template: %s\n", err)
 	}
 
 	tmpl, err := template.New(gaeName).Option("missingkey=error").Parse(string(blob))
 	if err != nil {
-		return fmt.Errorf("Error parsing template: %s\n", err)
+		return fmt.Errorf("error parsing template: %s\n", err)
 	}
 
 	out, err := os.OpenFile(dest, os.O_TRUNC|os.O_RDWR, 0755)
 	if err != nil {
-		return fmt.Errorf("Error opening template: %s\n", err)
+		return fmt.Errorf("error opening template: %s\n", err)
 	}
 	defer out.Close()
 
 	err = tmpl.Execute(out, vargs.TemplateVars)
 	if err != nil {
-		return fmt.Errorf("Error executing template: %s\n", err)
+		return fmt.Errorf("error executing template: %s\n", err)
 	}
 
 	return nil

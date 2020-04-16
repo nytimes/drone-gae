@@ -1,48 +1,56 @@
 ---
 workspace:
   base: /go
-  path: src/github.com/NYTimes/drone-gae
+  path: src/github.com/nytimes/drone-gae
+
+go_config: &go_config
+  image: golang:1
+  environment:
+    - GO111MODULE=on
+    - GOPROXY=https://proxy.golang.org
+    - CGO_ENABLED=0
+
+slack_config: &slack_config
+  image: plugins/slack
+  channel: dv-notifications
+  secrets: [slack_webhook]
 
 pipeline:
   test:
-    image: golang:1
-    environment:
-      - GO111MODULE=on
-      - CGO_ENABLED=0
-      - GOPATH=/go
+    <<: *go_config
     commands:
       - go mod download
-      - go vet
-      - go test -cover
+      - go test -cover -vet all
 
   build:
-    image: golang:1
-    environment:
-      - GO111MODULE=on
-      - CGO_ENABLED=0
-      - GOPATH=/go
+    <<: *go_config
     commands:
       - go build -a -ldflags "-X main.version=${DRONE_TAG:-other} -X main.rev=${DRONE_COMMIT}"
     when:
-      event: [push, tag]
+      branch: master
 
-  publish:
+  build_release:
+    <<: *go_config
+    commands:
+      - go build -a -ldflags "-X main.version=${DRONE_TAG:-other} -X main.rev=${DRONE_COMMIT}"
+    when:
+      event: tag
+
+  publish_release:
     image: plugins/docker
     repo: nytimes/drone-gae
+    dockerfile: Dockerfile
+    auto_tag: true
     secrets:
       - docker_username
       - docker_password
-    auto_tag: true
-    when:
-      event: [tag, push]
-      branch: master
 
   slack:
-    image: plugins/slack
-    channel: dv-notifications
-    webhook:
-      from_secret: slack_webhook
+    <<: *slack_config
     when:
-      event: [tag, push]
-      branch:
-        - master
+      branch: master
+
+  slack_tag:
+    <<: *slack_config
+    when:
+      event: tag
