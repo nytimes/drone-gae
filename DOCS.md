@@ -152,7 +152,7 @@ pipeline:
     app_file: app.yaml
     vars:
       API_TOKEN: $${MY_TOKEN}
-      APP_KEY: $${MY_KEY}
+      APP_KEY: $MY_KEY
     secrets: [my_token, my_key]
 ```
 
