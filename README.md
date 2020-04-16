@@ -17,8 +17,6 @@ To see the App Engine SDK and `gcloud` versions, check out the [Dockerfile depen
 
 ## Drone versions compatibility
 
-This plugin supports Drone 0.4 and 0.6+ (0.5 is deprecated).
+This plugin supports 0.6+ and 1.0+.
 
-For usage in Drone 0.5 and newer, see [these docs](DOCS.md).
-
-For usage in Drone 0.4, see [these docs](DOCS-4.md).
+For usage, see [these docs](DOCS.md).
