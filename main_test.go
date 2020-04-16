@@ -69,7 +69,7 @@ func TestValidateVargs(t *testing.T) {
 		Project: "myproject",
 		Action:  "dostuff",
 	}
-	assert.EqualError(t, validateVargs(&vargs), "missing required param: token")
+	assert.EqualError(t, validateVargs(&vargs), "missing required credentials: GAE_CREDENTIALS or param token")
 
 	vargs = GAE{
 		Token:   "mytoken",
@@ -81,7 +81,7 @@ func TestValidateVargs(t *testing.T) {
 		Token:  "brokentoken",
 		Action: "dostuff",
 	}
-	assert.EqualError(t, validateVargs(&vargs), "project id not found in token or param")
+	assert.EqualError(t, validateVargs(&vargs), "missing required project id: not found in credentials or param project")
 
 	vargs = GAE{
 		Token:  `{"project_id": "my-gcp-project"}`,
