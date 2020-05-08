@@ -14,6 +14,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/joho/godotenv"
 	"github.com/drone/drone-plugin-go/plugin"
 )
 
@@ -124,6 +125,11 @@ func wrapMain() error {
 
 	vargs := GAE{}
 	workspace := ""
+
+	// If there is an env vars file load it
+	if _, err := os.Stat("/run/drone/env"); err == nil {
+		godotenv.Overload("/run/drone/env")
+	}
 
 	// Check what drone version we're running on
 	if os.Getenv("DRONE_WORKSPACE") == "" { // 0.4
