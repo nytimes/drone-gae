@@ -128,7 +128,7 @@ func wrapMain() error {
 
 	// If there is an env vars file load it
 	if _, err := os.Stat("/run/drone/env"); err == nil {
-		godotenv.Overload("/run/drone/env")
+		godotenv.Load("/run/drone/env")
 	}
 
 	// Check what drone version we're running on
