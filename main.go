@@ -364,14 +364,17 @@ func runGcloud(runner *Environ, workspace string, vargs GAE) error {
 		}
 	}
 
-	switch {
-	// hook in the apropro yaml file
-	case vargs.DispatchFile != "":
-		args = append(args, "./dispatch.yaml")
-	case vargs.CronFile != "":
-		args = append(args, "./cron.yaml")
-	default:
-		args = append(args, "./app.yaml")
+	// hook in the appropriate yaml file unless the action is a group
+	// 'gcloud app services X Y Z' fails with the addition of a yaml file
+	if !gcloudGroups[vargs.Action] {
+		switch {
+		case vargs.DispatchFile != "":
+			args = append(args, "./dispatch.yaml")
+		case vargs.CronFile != "":
+			args = append(args, "./cron.yaml")
+		default:
+			args = append(args, "./app.yaml")
+		}
 	}
 
 	// add a version if we've got one
