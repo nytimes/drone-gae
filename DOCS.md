@@ -12,6 +12,8 @@ Refer to GAE [Access Control](https://cloud.google.com/appengine/docs/flexible/p
 Use least permissible role for the tasks required.
 Typically for `action: deploy` this is `App Engine Admin` and `Cloud Build Service Account`.
 
+If the service account JSON key is provided in base64 format, the plugin will decode it internally.
+
 For example:
 
 ```yml
