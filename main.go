@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -242,6 +243,13 @@ func configFromEnv(vargs *GAE, workspace *string) error {
 		// falling back to old env variable for drone 0.x compatibility
 		// secrets are not prefixed
 		vargs.Token = os.Getenv("GAE_CREDENTIALS")
+	}
+
+	if decodedToken, err := base64.StdEncoding.DecodeString(vargs.Token); err == nil {
+		// if no error then the token is base64 encoded (or empty)
+		vargs.Token = string(decodedToken)
+	} else {
+		fmt.Println("gae_credentials is not base64 encoded: skipping decode")
 	}
 
 	// Maps

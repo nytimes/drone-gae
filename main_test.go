@@ -229,3 +229,22 @@ func TestSetupFile(t *testing.T) {
 	}
 
 }
+
+func TestEncodedToken(t *testing.T) {
+
+	os.Setenv("PLUGIN_GAE_CREDENTIALS", "ZW5jb2RlZCBzZXJ2aWNlIGFjY291bnQga2V5")
+
+	vargs := GAE{}
+
+	workspace := ""
+	configFromEnv(&vargs, &workspace)
+
+	expectedDecodedToken := "encoded service account key"
+	assert.Equal(t, expectedDecodedToken, vargs.Token)
+
+	nonEncodedToken := "non-encoded service account key"
+	os.Setenv("PLUGIN_GAE_CREDENTIALS", nonEncodedToken)
+
+	configFromEnv(&vargs, &workspace)
+	assert.Equal(t, nonEncodedToken, vargs.Token)
+}
