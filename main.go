@@ -248,6 +248,8 @@ func configFromEnv(vargs *GAE, workspace *string) error {
 	if decodedToken, err := base64.StdEncoding.DecodeString(vargs.Token); err == nil {
 		// if no error then the token is base64 encoded (or empty)
 		vargs.Token = string(decodedToken)
+	} else {
+		fmt.Println("gae_credentials is not base64 encoded: skipping decode")
 	}
 
 	// Maps
