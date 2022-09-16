@@ -52,6 +52,18 @@ steps:
     event:
     - tag
 
+- name: docker_build_test
+  pull: if-not-exists
+  image: plugins/docker
+  settings:
+    dry_run: true
+    dockerfile: Dockerfile
+    repo: nytimes/drone-gae
+  when:
+    branch:
+      exclude:
+      - main
+
 - name: publish_release
   pull: if-not-exists
   image: plugins/docker
