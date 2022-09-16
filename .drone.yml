@@ -38,7 +38,6 @@ steps:
   name: build
   commands:
   - go build -a -ldflags "-X main.version=n/a -X main.rev=${DRONE_COMMIT}"
-  - go build -a -ldflags "-X main.version=${DRONE_TAG:-other} -X main.rev=${DRONE_COMMIT}"
   when:
     branch:
     - main
@@ -47,7 +46,6 @@ steps:
   name: build_release
   commands:
   - go build -a -ldflags "-X main.version=${DRONE_TAG} -X main.rev=${DRONE_COMMIT}"
-  - go build -a -ldflags "-X main.version=${DRONE_TAG:-other} -X main.rev=${DRONE_COMMIT}"
   when:
     event:
     - tag

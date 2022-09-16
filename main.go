@@ -18,6 +18,13 @@ import (
 	"github.com/drone/drone-plugin-go/plugin"
 )
 
+var (
+	// Version is set at compile time.
+	version string
+	// Build revision is set at compile time.
+	rev string
+)
+
 type GAE struct {
 	// Action is required and can be any action accepted by the `appcfg.py` or
 	// `gcloud app` commands:
@@ -104,10 +111,6 @@ type GAE struct {
 	Beta bool `json:"beta"`
 }
 
-var (
-	rev string
-)
-
 func main() {
 	err := wrapMain()
 	if err != nil {
@@ -117,11 +120,15 @@ func main() {
 }
 
 func wrapMain() error {
+	if version == "" {
+		version = "x.x.x"
+	}
+
 	if rev == "" {
 		rev = "[unknown]"
 	}
 
-	fmt.Printf("Drone GAE Plugin built from %s\n", rev)
+	fmt.Printf("Drone GAE Plugin %s built from %s\n", version, rev)
 
 	vargs := GAE{}
 	workspace := ""
