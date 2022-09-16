@@ -58,9 +58,8 @@ steps:
     dockerfile: Dockerfile
     repo: nytimes/drone-gae
   when:
-    branch:
-      exclude:
-      - main
+    event:
+    - pull_request
 
 - name: publish_release
   pull: if-not-exists
