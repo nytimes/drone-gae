@@ -1,179 +1,194 @@
 # Overview (Drone 0.4)
 
-The examples below are for secrets in the 0.4 format and **are not longer maintained** because Drone 0.4 has reached EOL.
-
-The GCP [Service Account JSON](https://cloud.google.com/iam/docs/creating-managing-service-account-keys) must be passed to the `token` parameter in .drone.yml using the `$$SECRET_NAME` notation.
+The examples below may reference GAE options that **are no longer supported by GAE**.
+They are only here to provide as example workflow configurations.
 
 ## Basic example of capable of deploying a new version of a Go, PHP and Python 'hello, world' application to standard App Engine.
 
 ```yml
-deploy:
-  gae:
+- name: gae
+  pull: if-not-exists
+  settings:
     action: update
     project: my-gae-project
-    version: "$$COMMIT"
-    token: >
-      $$GOOGLE_CREDENTIALS
-    when:
-      event: push
-      branch: master
+    gae_credentials:
+      from_secret: GOOGLE_CREDENTIALS
+    version: "${DRONE_COMMIT}"
+  when:
+    branch:
+    - main
+    event:
+    - push
 ```
 
 ## Testing, deploying and migrating traffic to a Go application.
 
 ```yml
-build:
+- name: test
+  pull: if-not-exists
+  image: jprobinson/ae-go-buildbox:1.6
+  commands:
+  - goapp get -t
+  - goapp test -v -cover
+  when:
+    event:
+    - push
+    - pull_request
 
-  test:
-    image: jprobinson/ae-go-buildbox:1.6
-    commands:
-      - goapp get -t
-      - goapp test -v -cover
-    when:
-      event:
-        - push
-        - pull_request
-
-deploy:
-
-  # deploy new version to App Engine
-  gae_new:
-    image: nytimes/drone-gae
-    environment:
-      - GOPATH=/drone
+- name: gae_new
+  pull: if-not-exists
+  image: nytimes/drone-gae
+  environment:
+    MY_SECRET_DEV:
+      from_secret: SECRET_DEV
+  settings:
     action: update
-    project: my-gae-project
-    version: "$$COMMIT"
     ae_environment:
-      MY_SECRET: $$MY_SECRET_DEV
-    token: >
-      $$GOOGLE_CREDENTIALS
-    when:
-      event: push
-      branch: master
+      MY_SECRET: $${MY_SECRET_DEV}
+    project: my-gae-project
+    gae_credentials:
+      from_secret: GOOGLE_CREDENTIALS
+    version: "${DRONE_COMMIT}"
+  environment:
+    GOPATH: /drone
+  when:
+    branch:
+    - main
+    event:
+    - push
 
-  # set new version to 'default', which migrates 100% traffic
-  gae_migrate:
-    image: nytimes/drone-gae
+- name: gae_migrate
+  pull: if-not-exists
+  image: nytimes/drone-gae
+  settings:
     action: set_default_version
     project: my-gae-project
-    version: "$$COMMIT"
-    token: >
-      $$GOOGLE_CREDENTIALS
-    when:
-      event: push
-      branch: master
+    gae_credentials:
+      from_secret: GOOGLE_CREDENTIALS
+    version: "${DRONE_COMMIT}"
+  when:
+    branch:
+    - main
+    event:
+    - push
 ```
 
 ## Deploying multiple applications from the same git repository using the 'dir' option:
 
 ```yml
-deploy:
-
-  # deploy new version of the 'frontend' service to App Engine
-  gae_frontend:
-    image: nytimes/drone-gae
+- name: gae_frontend
+  pull: if-not-exists
+  image: nytimes/drone-gae
+  settings:
     action: update
-    project: my-gae-project
-    version: "$$COMMIT"
     dir: frontend
-    token: >
-      $$GOOGLE_CREDENTIALS
-    when:
-      event: push
-      branch: master
-
-  # deploy new version of the 'api' service to App Engine
-  gae_api:
-    image: nytimes/drone-gae
-    action: update
     project: my-gae-project
-    version: "$$COMMIT"
+    gae_credentials:
+      from_secret: GOOGLE_CREDENTIALS
+    version: "${DRONE_COMMIT}"
+  when:
+    branch:
+    - main
+    event:
+    - push
+
+- name: gae_api
+  pull: if-not-exists
+  image: nytimes/drone-gae
+  settings:
+    action: update
     dir: api
-    token: >
-      $$GOOGLE_CREDENTIALS
-    when:
-      event: push
-      branch: master
+    project: my-gae-project
+    gae_credentials:
+      from_secret: GOOGLE_CREDENTIALS
+    version: "${DRONE_COMMIT}"
+  when:
+    branch:
+    - main
+    event:
+    - push
 ```
 
-## Deploying an application to dev via pushes to master and to prd via git tags:
+## Deploying an application to dev via pushes to main and to prd via git tags:
 
 ```yml
-deploy:
-
-  # deploy new version of the service to App Engine on
-  # every commit to master to a 'dev' project using a specific yaml file
-  gae_dev:
-    image: nytimes/drone-gae
+- name: gae_dev
+  pull: if-not-exists
+  image: nytimes/drone-gae
+  settings:
     action: update
-    project: my-dev-project
-    version: "$$COMMIT"
     app_file: dev.yaml
-    token: >
-      $$GOOGLE_CREDENTIALS_DEV
-    when:
-      event: push
-      branch: master
+    project: my-dev-project
+    gae_credentials:
+      from_secret: GOOGLE_CREDENTIALS
+    version: "${DRONE_COMMIT}"
+  when:
+    branch:
+    - main
+    event:
+    - push
 
-  # deploy new version of the service to App Engine on
-  # every git tag to a 'prd' project using a specific yaml file
-  gae_prd:
-    image: nytimes/drone-gae
+- name: gae_prd
+  pull: if-not-exists
+  image: nytimes/drone-gae
+  settings:
     action: update
-    project: my-prd-project
-    version: "$$COMMIT"
     app_file: prd.yaml
-    token: >
-      $$GOOGLE_CREDENTIALS_PRD
-    when:
-      event: tag
+    project: my-prd-project
+    gae_credentials:
+      from_secret: GOOGLE_CREDENTIALS
+    version: "${DRONE_COMMIT}"
+  when:
+    event:
+    - tag
 ```
 
 ## Building a Docker image, pushing it to GCR and then deploying it via `gcloud app deploy`:
 
 ```yml
-build:
+- name: compile
+  pull: if-not-exists
+  image: jprobinson/ae-go-buildbox:1.6
+  commands:
+  - go test -v -race ./...
+  - go build -o api .
+  environment:
+    GOPATH: /drone
+  when:
+    event:
+    - push
+    - pull_request
 
-  compile:
-    image: jprobinson/ae-go-buildbox:1.6
-    environment:
-      - GOPATH=/drone
-    commands:
-      - go test -v -race ./...
-      - go build -o api .
-    when:
-      event:
-        - push
-        - pull_request
-
-publish:
-
-  # runs `docker build` and `docker push` to the specified GCR
-  gcr:
+- name: gcr
+  pull: if-not-exists
+  settings:
     repo: my-gae-project/api
-    tag: "$$COMMIT"
-    token: >
-       $$GOOGLE_CREDENTIALS_DEV
     storage_driver: overlay
-    when:
-      branch: [develop, master]
-      event: push
+    tag: "${DRONE_COMMIT}"
+    gae_credentials:
+      from_secret: GOOGLE_CREDENTIALS
+  when:
+    branch:
+    - develop
+    - main
+    event:
+    - push
 
-deploy:
-
-  # deploy a new version using the docker image we just published and stop any previous versions when complete
-  gae:
-    image: nytimes/drone-gae
+- name: gae
+  pull: if-not-exists
+  image: nytimes/drone-gae
+  settings:
     action: deploy
-    project: my-gae-project
-    flex_image: gcr.io/my-gae-project/puzzles-sub:$$COMMIT
-    version: "$${COMMIT:0:10}"
     addl_flags:
-     - --stop-previous-version
-    token: >
-      $$GOOGLE_CREDENTIALS_LAB
-    when:
-      event: push
-      branch: develop
+    - --stop-previous-version
+    flex_image: gcr.io/my-gae-project/puzzles-sub:"${DRONE_COMMIT}"
+    project: my-gae-project
+    gae_credentials:
+      from_secret: GOOGLE_CREDENTIALS
+    version: "${DRONE_COMMIT:0:10}"
+  when:
+    branch:
+    - develop
+    event:
+    - push
 ```
