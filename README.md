@@ -4,6 +4,13 @@
 
 Drone plugin to manage deployments on Google App Engine.
 
+## Links
+
+- Usage [documentation](DOCS.md)
+- Docker Hub [release tags](https://hub.docker.com/r/nytimes/drone-gae/tags)
+- Drone.io [builds](https://cloud.drone.io/nytimes/drone-gae)
+- Contributing [documentation](.github/CONTRIBUTING.md)
+
 ## Overview
 
 This plugin is a simple wrapper around the `appcfg.py` and `gcloud app` commands, which makes it capable of making deployments in the standard environment or flexible environments with any language available.
@@ -17,6 +24,6 @@ To see the App Engine SDK and `gcloud` versions, check out the [Dockerfile depen
 
 ## Drone versions compatibility
 
-This plugin supports 0.6+ and 1.0+.
+This plugin supports Drone 1.0+.
 
-For usage, see [these docs](DOCS.md).
+For usage, see [these docs](DOCS.md) and [`main.go`](main.go).
