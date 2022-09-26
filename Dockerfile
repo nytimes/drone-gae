@@ -1,4 +1,4 @@
-FROM gcr.io/google.com/cloudsdktool/cloud-sdk:328.0.0
+FROM gcr.io/google.com/cloudsdktool/cloud-sdk:403.0.0
 
 RUN apt-get install -qqy unzip
 
