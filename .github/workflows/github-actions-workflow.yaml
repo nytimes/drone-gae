@@ -1,0 +1,83 @@
+name: drone-gae
+
+on:
+  push:
+    branches: [ "main" ]
+    tags:
+      - '*'
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  GO111MODULE: on
+  CGO_ENABLED: 0
+ 
+jobs:
+   build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.19
+
+    - name: Test
+      run: |
+        go mod download
+        go test -cover -vet all
+    
+    - name: Build
+      run: |
+        go build -a -ldflags "-X main.version=${{ inputs.github_ref_name }} -X main.rev=${{ inputs.github_sha }}"
+        
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@v4
+      with:
+        images: nytimes/drone-gae
+        tags: |
+          type=raw,value=latest,enable={{is_default_branch}}
+          type=ref,event=tag
+  
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    
+    - name: Build and push dry run
+      if: ${{ github.event_name == 'pull_request' }}
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        platforms: linux/amd64
+        push: false
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+    
+    - run: echo ${GITHUB_REF}
+    
+    - name: Build and push
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        platforms: linux/amd64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+  
+    - name: Slack Notification for release tag
+      if: startsWith(github.ref, 'refs/tags/v')
+      id: slack
+      uses: slackapi/slack-github-action@v1.23.0
+      with:
+        payload: |
+          {
+            "text": "GitHub Actions Build Result for release tag: ${{ job.status }}\n triggered_by: ${{ github.actor }}\n job url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\n commit url: ${{ github.event.head_commit.url }}"    
+          }
+      env:
+        # webhook for posting on #dv-notifications for now
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
