@@ -47,37 +47,25 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
     
-    - name: Build and push dry run
-      if: ${{ github.event_name == 'pull_request' }}
-      uses: docker/build-push-action@v4
-      with:
-        context: .
-        platforms: linux/amd64
-        push: false
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-    
-    - run: echo ${GITHUB_REF}
-    
+    # dry run, don't push image for pull_request event.
     - name: Build and push
-      if: startsWith(github.ref, 'refs/tags/v')
       uses: docker/build-push-action@v4
       with:
         context: .
         platforms: linux/amd64
-        push: true
+        push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
   
-    - name: Slack Notification for release tag
-      if: startsWith(github.ref, 'refs/tags/v')
+    - name: Slack Notification
+      if: ${{ github.event_name != 'pull_request' }}
       id: slack
       uses: slackapi/slack-github-action@v1.23.0
       with:
         payload: |
           {
-            "text": "GitHub Actions Build Result for release tag: ${{ job.status }}\n triggered_by: ${{ github.actor }}\n job url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\n commit url: ${{ github.event.head_commit.url }}"    
+            "text": "GitHub Actions Build Result: ${{ job.status }}\n triggered_by: ${{ github.actor }}\n job url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\n commit url: ${{ github.event.head_commit.url }}"
           }
       env:
-        # webhook for posting on #dv-notifications for now
+        # webhook for posting on #dv-notifications for now.
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
