@@ -42,7 +42,7 @@ jobs:
     
     - name: Build
       run: |
-        go build -a -ldflags "-X main.version=${{ inputs.github_ref_name }} -X main.rev=${{ inputs.github_sha }}"
+        go build -a -ldflags "-X main.version=${GITHUB_REF_NAME} -X main.rev=${GITHUB_SHA}"
         
     - name: Docker meta
       id: meta
