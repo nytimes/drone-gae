@@ -8,7 +8,7 @@ Drone plugin to manage deployments on Google App Engine.
 
 - Usage [documentation](DOCS.md)
 - Docker Hub [release tags](https://hub.docker.com/r/nytimes/drone-gae/tags)
-- Drone.io [builds](https://cloud.drone.io/nytimes/drone-gae)
+- GitHub Actions Workflow [runs](https://github.com/nytimes/drone-gae/actions)
 - Contributing [documentation](.github/CONTRIBUTING.md)
 
 ## Overview
