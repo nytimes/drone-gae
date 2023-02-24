@@ -1,4 +1,4 @@
-# Contributing to Drone-GAE
+# Contributing to drone-gae
 
 `drone-gae` is an open source project started by handful of developers at The New York Times and open to the entire open source community.
 
