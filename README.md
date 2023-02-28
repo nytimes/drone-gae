@@ -1,6 +1,6 @@
 # drone-gae
 
-[![Build Status](https://github.com/nytimes/drone-gae/actions/workflows/build.yml/badge.svg)](https://github.com/nytimes/drone-gae/actions/workflows/build.yaml)
+[![Build Status](https://github.com/nytimes/drone-gae/actions/workflows/build.yaml/badge.svg)](https://github.com/nytimes/drone-gae/actions/workflows/build.yaml)
 
 Drone plugin to manage deployments on Google App Engine.
 
