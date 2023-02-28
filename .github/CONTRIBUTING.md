@@ -1,6 +1,6 @@
-# Contributing to Drone-GAE
+# Contributing to drone-gae
 
-Drone-GAE is an open source project started by handful of developers at The New York Times and open to the entire open source community.
+`drone-gae` is an open source project started by handful of developers at The New York Times and open to the entire open source community.
 
 We really appreciate your help!
 
@@ -26,10 +26,8 @@ Before submitting changes, please follow these guidelines:
 1. Open an issue to discuss a new feature.
 1. Write tests.
 1. Make sure code follows the ['Go Code Review Comments'](https://github.com/golang/go/wiki/CodeReviewComments).
-<!--1. Make sure your changes pass `make test`.-->
-<!--1. Make sure the entire test suite passes locally and on Travis CI.-->
 1. Open a Pull Request.
 
 ## License
 
-Unless otherwise noted, the Drone-GAE source files are distributed under the Apache 2.0-style license found in the LICENSE file.
+Unless otherwise noted, `drone-gae` is distributed under the Apache 2.0-style license found in the LICENSE file.
