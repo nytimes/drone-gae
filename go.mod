@@ -1,6 +1,6 @@
 module github.com/nytimes/drone-gae
 
-go 1.19
+go 1.23.1
 
 require (
 	github.com/drone/drone-plugin-go v0.0.0-20160112175251-d6109f644c59
